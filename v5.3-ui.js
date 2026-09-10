@@ -23,16 +23,14 @@
     document.getElementById('startBtn').onclick=()=>{const pick=A._draft;A._draft=null;A._rollCount=0;A.newLife(pick);N.classList.remove('hidden')};
   };
 
-  // 选项卡使用根节点事件代理，不再每一年重新给 4/5 个按钮挂 onclick。
-  // 对长局和 iOS/WKWebView 更稳，也避免旧 DOM 的监听器残留。
+  // 根节点事件代理：不再每年给新 DOM 重绑四五个 onclick。
+  // 不做时间型 debounce。resolve 自己已经有 busy 状态锁；时间节流会误吞玩家连续点击，
+  // 在 WebKit 上尤其容易表现成“按钮突然没反应”。
   if(!A._choiceDelegationInstalled){
     R.addEventListener('click',e=>{
       const b=e.target?.closest?.('.action-card[data-i]');
       if(!b||b.disabled)return;
       e.preventDefault();
-      const now=Date.now();
-      if(A._lastChoiceTap&&now-A._lastChoiceTap<120)return;
-      A._lastChoiceTap=now;
       const i=Number(b.dataset.i),action=A.year?.[i];
       if(action)A.resolve(action);
     },true);
@@ -46,7 +44,7 @@
     const r=document.getElementById('restartBtn');if(r)r.onclick=()=>{if(confirm('重开当前人生？图鉴和族谱保留。')){A.p=null;A.startView()}};
   };
 
-  // 根据当年实际选项数量动态铺满屏幕：普通年 4 格，抓周/特殊节点 5 格或更多。
+  // 根据当年实际选项数量动态铺满屏幕：普通年 4 格，抓周/特殊节点按实际数量。
   const renderBase=A.render;
   A.render=()=>{
     renderBase();
