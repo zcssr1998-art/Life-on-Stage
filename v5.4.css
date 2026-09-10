@@ -20,8 +20,9 @@
 }
 .r-P em{color:#fff!important;opacity:.9!important}
 
-/* 游戏进程重新排版：HUD / 属性 / 最新结果 / 选项标题 / 事件。 */
-.game-screen.v54-game{
+/* 游戏进程重新排版：HUD / 属性 / 最新结果 / 选项标题 / 事件。
+   带上 :not(:has(.result-strip)) 是为了明确压过 V5.3 的旧四行网格 !important。 */
+.game-screen.v54-game:not(:has(.result-strip)){
   display:grid;
   grid-template-rows:72px 82px 48px 22px minmax(0,1fr)!important;
   gap:6px;
@@ -169,7 +170,7 @@
 .v54-history-block{padding-bottom:8px}
 
 @media(max-width:640px){
-  .game-screen.v54-game{
+  .game-screen.v54-game:not(:has(.result-strip)){
     grid-template-rows:58px 72px 46px 20px minmax(0,1fr)!important;
     gap:4px;
   }
