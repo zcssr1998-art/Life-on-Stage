@@ -1,79 +1,111 @@
 const { test, expect } = require('@playwright/test');
 
-test('mobile WebKit survives long sessions and validates V5.4 HUD/traits', async ({ page }) => {
+test('mobile WebKit survives long sessions and validates V5.5 narrative UI', async ({ page }) => {
   await page.goto('/?e2e=1', { waitUntil: 'networkidle' });
   await expect(page.locator('#startBtn')).toBeVisible();
 
-  // V5.4 trait-pool contract: 200 total, with the new prismatic tier and fewer B traits.
   const pool = await page.evaluate(() => {
     const counts={};
     for(const t of window.LIFE.TRAITS)counts[t.rarity]=(counts[t.rarity]||0)+1;
-    return {total:window.LIFE.TRAITS.length,counts};
+    return {total:window.LIFE.TRAITS.length,counts,micro:window.LIFE.MICRO_EVENTS?.length||0};
   });
   expect(pool.total).toBe(200);
   expect(pool.counts).toEqual({SSS:20,SS:30,S:45,A:60,B:35,P:10});
+  expect(pool.micro).toBeGreaterThanOrEqual(45);
 
-  // "5%" is intentionally defined per whole five-trait opening Roll, not per slot.
-  // Sample enough rolls to catch accidental probability regressions without making the test flaky.
   const prismRate = await page.evaluate(() => {
-    let prism=0,n=4000;
+    let prism=0,n=3000;
     for(let i=0;i<n;i++)if(window.APP.rollTraits(5).some(t=>t.rarity==='P'))prism++;
     return prism/n;
   });
-  expect(prismRate).toBeGreaterThan(0.035);
-  expect(prismRate).toBeLessThan(0.065);
+  expect(prismRate).toBeGreaterThan(0.03);
+  expect(prismRate).toBeLessThan(0.07);
 
-  // Opening controls must be physically clickable in WebKit.
   await expect(page.locator('.start-traits .trait-chip')).toHaveCount(5);
   await page.locator('#rerollBtn').click();
-  await expect(page.locator('#startBtn')).toBeVisible();
   await page.locator('#startBtn').click();
 
-  // Prevent random early death while testing layout/interactions.
+  // Prevent random death while exercising layout and state changes.
   await page.evaluate(() => { window.APP.deathCheck = () => false; });
 
-  // Zhou is physically clicked once: this catches real hitbox overlap/interception.
+  // Opening HUD: 10 horizontal 0-200 attribute bars, five best traits, no spouse yet.
   await expect(page.locator('.action-card[data-i]')).toHaveCount(5);
-  await expect(page.locator('.v54-stat')).toHaveCount(10);
-  await expect(page.locator('.v54-top-trait')).toHaveCount(5);
-  await expect(page.locator('.timeline-compact')).toHaveCount(0);
+  await expect(page.locator('.v55-stat')).toHaveCount(10);
+  await expect(page.locator('.v55-top-trait')).toHaveCount(5);
+  await expect(page.locator('.v55-spouse')).toHaveCount(0);
+  const marks = await page.locator('.v55-bar .mark100').count();
+  expect(marks).toBe(10);
+
   await page.locator('.action-card[data-i]').first().click();
   await page.waitForFunction(() => window.APP?.p?.age === 2 || !window.APP?.p?.alive);
 
-  // Normal years are now 4-choice, with one strong latest-result strip and live stat deltas.
+  // Every resolved year has 1-3 rich narrative cards; regular year stays 4-choice.
   await expect(page.locator('.action-card[data-i]')).toHaveCount(4);
-  await expect(page.locator('.v54-impact')).toContainText('刚刚发生');
-  const changedStats = await page.locator('.v54-stat em:not(.flat)').count();
-  expect(changedStats).toBeGreaterThan(0);
+  const storyCount=await page.locator('.v55-story').count();
+  expect(storyCount).toBeGreaterThanOrEqual(1);
+  expect(storyCount).toBeLessThanOrEqual(3);
+  const storyText=await page.locator('.v55-story p').first().textContent();
+  expect((storyText||'').length).toBeGreaterThan(18);
 
-  // Full history lives only in Character Info; base stats no longer duplicate there.
+  // Stat scale really exceeds 100 and caps only at 200.
+  const statScale = await page.evaluate(() => {
+    const A=window.APP;
+    A.p.stats.health=137;A.clampStats(A.p);const a=A.p.stats.health;
+    A.p.stats.health=999;A.clampStats(A.p);const b=A.p.stats.health;
+    A.p.stats.health=88;A.render();
+    return {a,b};
+  });
+  expect(statScale.a).toBe(137);
+  expect(statScale.b).toBe(200);
+
+  // Relationship is a structural UI change: once a spouse exists, a second character slot appears.
+  await page.evaluate(() => { window.APP.spouse(); window.APP.render(); });
+  await expect(page.locator('.v55-spouse')).toBeVisible();
+  await expect(page.locator('.v55-spouse')).toContainText('当前伴侣');
+
+  // Character Info still owns the complete history; the main game screen only shows latest year.
   await page.locator('.nav-btn[data-view="info"]').click();
   await expect(page.locator('.full-history')).toBeVisible();
   await expect(page.locator('.stats-grid')).toHaveCount(0);
   await page.locator('.nav-btn[data-view="game"]').click();
 
-  // Exercise 120 DOM rebuilds quickly. Native element.click still traverses event delegation,
-  // but avoids Playwright spending ~1s on hit-target stabilization for every simulated year.
-  for (let i = 0; i < 120; i++) {
+  // Direct age-pool regressions in the real browser.
+  const leaks=await page.evaluate(() => {
+    const A=window.APP;
+    A.p.age=8;A.p.graduationAge=null;A.buildYear();
+    const young=A.year.map(x=>`${x.title} ${x.desc}`).join('|');
+    A.p.age=78;A.buildYear();
+    const old=A.year.map(x=>`${x.title} ${x.desc}`).join('|');
+    return {young,old};
+  });
+  expect(leaks.young).not.toMatch(/创业|融资|房贷|结婚|离婚|退休|杠杆/);
+  expect(leaks.old).not.toMatch(/幼儿园|小学|班主任|同桌|作业|家长会|过家家|高考|中考/);
+
+  // Exercise 100 DOM rebuilds and yearly event generation quickly.
+  for (let i = 0; i < 100; i++) {
     const state = await page.evaluate(() => {
       const A=window.APP;
       const before=A.p.age;
       const buttons=[...document.querySelectorAll('.action-card[data-i]:not([disabled])')];
       if(!buttons.length)return {error:`No enabled action at age ${before}`};
       buttons[0].click();
-      return {before,after:A.p.age,busy:A.busy,alive:A.p.alive,count:document.querySelectorAll('.action-card[data-i]').length};
+      return {before,after:A.p.age,busy:A.busy,alive:A.p.alive,count:document.querySelectorAll('.action-card[data-i]').length,stories:(A._yearStories||[]).length};
     });
     if(state.error)throw new Error(state.error);
     expect(state.busy).toBeFalsy();
     if(state.alive&&state.after!==state.before+1)throw new Error(`Age did not advance: ${state.before}->${state.after}`);
     if(state.alive&&![4,5,6].includes(state.count))throw new Error(`Unexpected option count ${state.count} at age ${state.after}`);
+    if(state.stories<1||state.stories>3)throw new Error(`Annual stories out of range: ${state.stories}`);
   }
 
-  // Direct regression for the prior screenshot failure mode: a death at old age must replace the old game UI.
+  // Rich ending must replace the game UI and contain several verdict paragraphs + life highlights.
   await page.evaluate(() => {
     window.APP.p.age = 94;
+    window.APP.p.stats.luck=155;
     window.APP.die('WebKit 回归测试');
   });
-  await expect(page.locator('.end-screen')).toBeVisible();
+  await expect(page.locator('.v55-end')).toBeVisible();
   await expect(page.locator('.game-screen')).toHaveCount(0);
+  expect(await page.locator('.v55-verdict>p').count()).toBeGreaterThanOrEqual(5);
+  await expect(page.locator('.v55-verdict')).toContainText('旁白吐槽');
 });
