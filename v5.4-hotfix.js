@@ -3,12 +3,13 @@
   L.VERSION='V5.4';
   const clamp=(lo,hi,v)=>Math.max(lo,Math.min(hi,v));
 
-  // 每局隐藏 Roll 两个长期参数：寿命脆弱度与经济波动度。
+  // 每局隐藏 Roll 三个长期参数：寿命脆弱度、经济波动度、现金流效率。
   // 不展示给玩家，避免把人生随机性变成可精确计算的公式。
   const ensureLifeVariance=p=>{
     if(!p)return p;
     if(!Number.isFinite(p.mortalityFactor))p.mortalityFactor=.75+Math.random()*.90;
     if(!Number.isFinite(p.economicVolatility))p.economicVolatility=.78+Math.random()*.57;
+    if(!Number.isFinite(p.cashflowFactor))p.cashflowFactor=.45+Math.random()*.95;
     return p;
   };
   const newLifeBase=A.newLife;
@@ -19,7 +20,6 @@
   };
 
   // 彩色词条保持极少数：开局整手约 5%；人生途中词条掉落约 4% 才会转成彩色。
-  // 其余掉落继续使用幸运、当年结果和稀有度权重。
   A.maybeTraitDrop=tone=>{
     const p=A.p,tm=A.traitMods(),sm=A.synergyMods();
     let chance=.11+p.stats.luck*.0006+Math.min(.08,tm.rare*.10+sm.rare*.14);
@@ -50,14 +50,11 @@
     return t;
   };
 
-  // 现金流重做：工资不再等于“每年稳定给资产灌钱”。
-  // 普通职业只积累真实可储蓄部分；退休/待业会烧现金；高资产存在维护成本与偶发冲击。
+  // 现金流重做：职业收入只产生“可储蓄部分”，不再每活一年就稳定灌钱。
   A.autoIncome=()=>{
     const p=ensureLifeVariance(A.p),j=A.job(p.career),tm=A.traitMods(),sm=A.synergyMods();
     if(!p)return;
-    const before=p.wealth;
-    const age=p.age;
-    const children=p.children?.length||0;
+    const before=p.wealth,age=p.age,children=p.children?.length||0;
     const employed=Number(j.salary)>0;
     const entrepreneur=p.tags?.includes('创业者')||p.tags?.includes('创业成功');
 
@@ -65,88 +62,96 @@
     if(entrepreneur)laborFactor=Math.max(laborFactor,age<75?.70:age<85?.30:.08);
 
     if(employed&&laborFactor>0){
-      const saveRate=clamp(.025,.29,.055+p.stats.stability*.00125+p.stats.discipline*.00115-children*.016-(p.spouse?.id?.length?0:.005));
+      // 普通人的净积累率压到更现实的区间；同样职业也会因每局现金流效率产生巨大差异。
+      const saveRate=clamp(.015,.22,.020+p.stats.stability*.00080+p.stats.discipline*.00080-children*.012-(p.spouse?0:.004));
       const bonus=clamp(-.15,.70,(sm.income||0)+(tm.income||0));
-      const annual=Math.round(j.salary*12*(p.salaryMul||1)*(p.world?.careerMul||1)*laborFactor*saveRate*(1+bonus));
+      const annual=Math.round(j.salary*12*(p.salaryMul||1)*(p.world?.careerMul||1)*laborFactor*saveRate*(1+bonus)*p.cashflowFactor);
       p.wealth+=annual;
     }else if(age>=18){
-      // 没有劳动现金流时，生活本身会消耗资产；年龄与家庭负担会放大开支。
-      const living=L.rand(14000,33000)*(1+children*.13)*(age>=65?1.25:1);
+      const living=L.rand(15000,36000)*(1+children*.15)*(age>=65?1.30:1)*p.economicVolatility;
       p.wealth-=Math.round(living);
     }
 
-    // 高资产不是无摩擦数字：住房、家庭、消费升级、维护与税费等形成轻微拖累。
+    // 有钱之后也有资产维护、消费升级、家庭与税费摩擦；越富绝对金额越大。
     if(p.wealth>300000){
-      let rate=p.wealth<1000000?.0025:p.wealth<5000000?.0055:p.wealth<15000000?.0085:.012;
-      rate*=p.economicVolatility;
-      p.wealth-=Math.round(p.wealth*rate);
+      let rate=p.wealth<1000000?.0035:p.wealth<5000000?.0065:p.wealth<15000000?.010:.014;
+      p.wealth-=Math.round(p.wealth*rate*p.economicVolatility);
     }
-    // 负债具有利息和现金流压力，允许形成真正的破产/翻盘曲线。
-    if(p.wealth<0)p.wealth-=Math.round(Math.abs(p.wealth)*(.045+.035*p.economicVolatility));
+    // 负债会滚利息，破产不再只是短暂地掉到负数下一年又自动爬回去。
+    if(p.wealth<0)p.wealth-=Math.round(Math.abs(p.wealth)*(.05+.045*p.economicVolatility));
 
-    // 投资只有玩家主动进入“投资者”路线后才存在。使用肥尾分布：大多数年份平淡，少数年份暴涨/暴跌。
+    // 投资只有主动成为“投资者”后才存在。收益是肥尾分布，不是线性复利按钮。
     if(p.tags?.includes('投资者')&&!p.blockedInvestment&&p.wealth>25000){
       const table=[
-        {r:-.65,w:.025,t:'黑天鹅把一大块本金抹掉了'},
-        {r:-.40,w:.065,t:'市场急跌，你的持仓遭到重创'},
-        {r:-.22,w:.105,t:'这一年投资明显回撤'},
-        {r:-.08,w:.16,t:'账户小幅回撤'},
-        {r:.02,w:.205,t:'市场几乎原地踏步'},
+        {r:-.70,w:.025,t:'黑天鹅把一大块本金抹掉了'},
+        {r:-.42,w:.065,t:'市场急跌，你的持仓遭到重创'},
+        {r:-.24,w:.105,t:'这一年投资明显回撤'},
+        {r:-.09,w:.16,t:'账户小幅回撤'},
+        {r:.01,w:.205,t:'市场几乎原地踏步'},
         {r:.10,w:.19,t:'投资组合取得普通正收益'},
-        {r:.22,w:.13,t:'你吃到了一段不错的行情'},
-        {r:.45,w:.07,t:'一轮强势行情显著抬高了资产'},
-        {r:.90,w:.035,t:'你押中的方向进入疯狂主升浪'},
-        {r:1.80,w:.015,t:'极少见的超级行情彻底改变了资产曲线'}
+        {r:.23,w:.13,t:'你吃到了一段不错的行情'},
+        {r:.48,w:.07,t:'一轮强势行情显著抬高了资产'},
+        {r:.95,w:.035,t:'你押中的方向进入疯狂主升浪'},
+        {r:1.90,w:.015,t:'极少见的超级行情彻底改变了资产曲线'}
       ];
       const edge=clamp(-.22,.55,(p.stats.luck-50)*.004+(tm.wealthOutcome||0)*.42+(tm.badGuard||0)*.15);
       const picked=A.weightPick(table.map(x=>({...x,_w:x.w*(x.r>0?1+Math.max(-.18,edge):Math.max(.45,1-edge*.55))})));
-      let invested=clamp(.12,.68,.25+(p.stats.risk-50)*.0055+(sm.extreme||0)*.18);
+      const invested=clamp(.12,.72,.25+(p.stats.risk-50)*.0058+(sm.extreme||0)*.20);
       const delta=Math.round(p.wealth*invested*picked.r*p.economicVolatility);
       p.wealth+=delta;
-      if(Math.abs(delta)>=25000&&Math.abs(picked.r)>=.20){
-        A.record({age,title:picked.r>0?'📈 投资大年':'📉 投资回撤',text:picked.t,changes:`财富${delta>0?'+':''}${L.fmtMoney(delta)}`,tone:delta>0?'good':'bad',kind:'finance'});
-      }
+      if(Math.abs(delta)>=25000&&Math.abs(picked.r)>=.20)A.record({age,title:picked.r>0?'📈 投资大年':'📉 投资回撤',text:picked.t,changes:`财富${delta>0?'+':''}${L.fmtMoney(delta)}`,tone:delta>0?'good':'bad',kind:'finance'});
     }
 
-    // 创业路线拥有自己的经营波动；它能制造真正的超级赢家，也能把多年积累打回去。
-    if(entrepreneur&&age>=20&&Math.random()<.27*p.economicVolatility){
+    // 创业者有独立的经营波动，允许一把起飞，也允许几年积累瞬间打回去。
+    if(entrepreneur&&age>=20&&Math.random()<.28*p.economicVolatility){
       const table=[
-        {r:-.48,w:.12,t:'业务踩中大坑，现金流严重失血'},
-        {r:-.22,w:.20,t:'经营不及预期，利润和积蓄一起被吃掉'},
-        {r:-.06,w:.20,t:'业务勉强维持，但这一年没留下什么'},
+        {r:-.52,w:.12,t:'业务踩中大坑，现金流严重失血'},
+        {r:-.25,w:.20,t:'经营不及预期，利润和积蓄一起被吃掉'},
+        {r:-.07,w:.20,t:'业务勉强维持，但这一年没留下什么'},
         {r:.12,w:.24,t:'业务稳步增长，终于有了一点经营杠杆'},
-        {r:.45,w:.17,t:'产品突然跑通，利润跃升'},
-        {r:1.15,w:.07,t:'业务爆发，规模在一年里跨了一个台阶'}
+        {r:.48,w:.17,t:'产品突然跑通，利润跃升'},
+        {r:1.25,w:.07,t:'业务爆发，规模在一年里跨了一个台阶'}
       ];
       const edge=clamp(-.15,.50,(p.stats.luck-50)*.0035+(tm.success||0)*.20+(p.stats.discipline-50)*.002);
       const picked=A.weightPick(table.map(x=>({...x,_w:x.w*(x.r>0?1+Math.max(-.15,edge):Math.max(.50,1-edge*.5))})));
-      const base=clamp(60000,2500000,Math.max(60000,Math.abs(p.wealth)*.55));
+      const base=clamp(60000,2600000,Math.max(60000,Math.abs(p.wealth)*.58));
       const delta=Math.round(base*picked.r*p.economicVolatility);
       p.wealth+=delta;
       if(Math.abs(delta)>=30000)A.record({age,title:picked.r>0?'🚀 生意爆发':'🧯 生意失血',text:picked.t,changes:`财富${delta>0?'+':''}${L.fmtMoney(delta)}`,tone:delta>0?'good':'bad',kind:'finance'});
     }
 
-    // 所有人都会碰到非线性现金事件。负面略多于正面，避免“只要活久就自动发财”。
-    if(age>=18&&Math.random()<.13*p.economicVolatility){
+    // 普通现金冲击：负面略多于正面，防止“寿命=财富”。
+    if(age>=18&&Math.random()<.15*p.economicVolatility){
       const r=Math.random(),scale=clamp(.8,2.4,p.economicVolatility*(1+Math.max(0,age-55)*.008));
       let delta=0,text='',tone='bad';
-      if(r<.26){delta=-L.rand(6000,52000)*scale;text=age>=60?'一次医疗与照护支出超出预期':'一笔突发生活支出打乱了现金流'}
-      else if(r<.48){delta=-L.rand(8000,72000)*scale;text='家庭突然需要一笔不小的支出'}
-      else if(r<.65){delta=-L.rand(5000,42000)*scale;text='设备、住房或交通工具出现了昂贵的问题'}
-      else if(r<.78){const frac=clamp(0,Math.max(15000,p.wealth),Math.max(12000,p.wealth*L.rand(5,18)/100));delta=-frac*scale;text='一次判断失误让你付出了真金白银的代价'}
-      else if(r<.93){delta=L.rand(8000,65000)*scale;text=employed?'奖金、项目分成或意外收入到账':'一个临时机会带来了一笔额外收入';tone='good'}
-      else{delta=L.rand(30000,180000)*scale;text='一笔罕见的意外之财落到了你头上';tone='good'}
-      delta=Math.round(delta);
-      p.wealth+=delta;
+      if(r<.26){delta=-L.rand(6000,56000)*scale;text=age>=60?'一次医疗与照护支出超出预期':'一笔突发生活支出打乱了现金流'}
+      else if(r<.48){delta=-L.rand(8000,76000)*scale;text='家庭突然需要一笔不小的支出'}
+      else if(r<.65){delta=-L.rand(5000,46000)*scale;text='设备、住房或交通工具出现了昂贵的问题'}
+      else if(r<.78){const loss=Math.max(12000,Math.max(0,p.wealth)*L.rand(5,20)/100);delta=-Math.min(Math.max(20000,Math.max(0,p.wealth)),loss)*scale;text='一次判断失误让你付出了真金白银的代价'}
+      else if(r<.93){delta=L.rand(8000,68000)*scale;text=employed?'奖金、项目分成或意外收入到账':'一个临时机会带来了一笔额外收入';tone='good'}
+      else{delta=L.rand(30000,190000)*scale;text='一笔罕见的意外之财落到了你头上';tone='good'}
+      delta=Math.round(delta);p.wealth+=delta;
       if(Math.abs(delta)>=18000)A.record({age,title:tone==='good'?'💰 意外进账':'💸 突发开支',text,changes:`财富${delta>0?'+':''}${L.fmtMoney(delta)}`,tone,kind:'finance'});
     }
 
-    // 记录本模块净现金变化，供 UI 年度变化使用；不单独塞进轨迹避免流水账。
+    // 命运级现金冲击：低频但足以改变整局曲线。它是财富分布的“肥尾”。
+    if(age>=22&&Math.random()<.028*p.economicVolatility){
+      const r=Math.random(),baseWealth=Math.max(0,p.wealth);let delta=0,text='',tone='bad';
+      if(r<.30){delta=-Math.max(L.rand(45000,170000),baseWealth*(.20+Math.random()*.28));text='一次重大变故吞掉了多年积累'}
+      else if(r<.52){delta=-Math.max(L.rand(30000,130000),baseWealth*(.10+Math.random()*.28));text='纠纷、错误决策或家庭责任造成了一次资产重创'}
+      else if(r<.67){delta=-L.rand(25000,95000);text='职业与现金流突然中断，你被迫动用储蓄'}
+      else if(r<.82){delta=L.rand(30000,160000);text='一个少见机会带来了一笔改变节奏的收入';tone='good'}
+      else if(r<.95){delta=L.rand(100000,480000);text='一笔大额机会、分成或家庭资产落到了你名下';tone='good'}
+      else{delta=L.rand(400000,1200000);text='极罕见的财富事件直接改写了你的人生资产曲线';tone='good'}
+      delta=Math.round(delta*p.economicVolatility);p.wealth+=delta;
+      A.record({age,title:tone==='good'?'✨ 命运进账':'⚠️ 命运重击',text,changes:`财富${delta>0?'+':''}${L.fmtMoney(delta)}`,tone,kind:'finance'});
+    }
+
     p._lastAutoCash=(p.wealth-before)||0;
   };
 
-  // 寿命重做：年龄基准风险更陡，同时每局的隐藏脆弱度使寿命真正分散。
-  // 强力长寿词条仍然有效，但保护有下限，避免叠到“几乎不死”。
+  // 寿命重做：60 岁后风险明显变陡，同时每局脆弱度不同。
+  // 长寿词条有效，但保护存在下限，避免组合后接近永生。
   A.deathCheck=()=>{
     const p=ensureLifeVariance(A.p);
     if(!p||!p.alive)return true;
@@ -162,16 +167,11 @@
     const protection=Math.max(.38,(tm.death||1)*(sm.death||1));
     const chance=clamp(0,.96,base*p.mortalityFactor*healthMul*riskMul*luckMul*protection);
     if(Math.random()<chance){
-      const causes=age<18?['意外事故','突发疾病']:
-        age<40?['交通意外','急性疾病','意外事故','运动意外']:
-        age<65?['突发疾病','交通意外','工作相关意外','急症']:
-        age<80?['心脑血管急症','突发疾病','意外跌倒','慢性疾病恶化']:
-        ['自然衰老','心脑血管急症','突发疾病','意外跌倒'];
+      const causes=age<18?['意外事故','突发疾病']:age<40?['交通意外','急性疾病','意外事故','运动意外']:age<65?['突发疾病','交通意外','工作相关意外','急症']:age<80?['心脑血管急症','突发疾病','意外跌倒','慢性疾病恶化']:['自然衰老','心脑血管急症','突发疾病','意外跌倒'];
       A.die(L.pick(causes));return true;
     }
     return false;
   };
 
-  // 旧存档进入 V5.4 时补齐隐藏参数。
   if(A.p)ensureLifeVariance(A.p);
 })();
