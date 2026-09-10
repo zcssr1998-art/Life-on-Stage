@@ -1,0 +1,80 @@
+/* V5.5 — age-aware narrative UI, 0-200 attributes, dynamic spouse HUD */
+
+.game-screen.v55-game:not(:has(.result-strip)){
+  display:grid!important;
+  grid-template-rows:auto auto auto 20px minmax(128px,1fr)!important;
+  gap:5px!important;
+  overflow:hidden!important;
+}
+
+.v55-hero{display:grid;gap:4px;min-width:0}
+.v55-self{
+  min-width:0;min-height:58px;display:grid;grid-template-columns:42px minmax(104px,1fr) minmax(140px,42%);
+  gap:6px;align-items:center;padding:6px 7px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(135deg,#121a29,#0d141f);
+}
+.v55-self .portrait{width:40px;height:40px;flex-basis:40px}
+.v55-self-main{min-width:0}
+.v55-title,.v55-money{display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden}
+.v55-title strong{font-size:16px}.v55-title span,.v55-money span{font-size:7.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.v55-money{margin-top:3px}.v55-money b{font-size:10px;color:#dce7ff}.v55-money i{font-size:7px;font-style:normal;font-weight:900}
+.v55-money i.up{color:var(--good)}.v55-money i.down{color:var(--bad)}
+.v55-top5{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:15px;gap:2px;align-content:center}
+.v55-top-trait{min-width:0;border:1px solid var(--line);border-radius:5px;background:#141b26;padding:1px 3px;display:flex;align-items:center;justify-content:space-between;gap:2px;overflow:hidden;font-size:6.5px;line-height:1}
+.v55-top-trait span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:850}.v55-top-trait em{font-size:5.4px;font-style:normal;opacity:.78;flex:0 0 auto}
+
+/* 伴侣不是静态资料页字段：关系建立后，主界面结构即时长出第二个角色槽。 */
+.v55-spouse{
+  min-width:0;height:38px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;align-items:center;
+  padding:3px 7px;border:1px solid rgba(250,139,255,.25);border-radius:10px;background:linear-gradient(90deg,rgba(250,139,255,.08),rgba(108,124,255,.06));
+}
+.v55-spouse .portrait{width:28px;height:28px;flex-basis:28px}.v55-spouse>div{min-width:0;display:grid;grid-template-columns:auto 1fr;column-gap:5px;align-items:center}
+.v55-spouse small{grid-column:1/-1;font-size:6.5px;color:#dca6e6}.v55-spouse strong{font-size:9px}.v55-spouse span{font-size:7px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v55-spouse>em{font-size:7px;font-style:normal;color:#edb7f2;white-space:nowrap}
+
+/* 属性：10 项 = 2 列 × 5 行。每一项都是横向柱图，200 为满槽，100/150 有刻度。 */
+.v55-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,24px);gap:3px;min-height:0}
+.v55-stat{min-width:0;border:1px solid #253348;border-radius:7px;background:#0f1722;padding:2px 4px;display:grid;grid-template-rows:11px 5px;gap:2px;overflow:hidden;cursor:pointer}
+.v55-stat-head{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) 25px 25px;align-items:center;gap:2px;line-height:1}
+.v55-stat-head span{min-width:0;font-size:7px;color:#9caac0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v55-stat-head b{font-size:9px;text-align:right}.v55-stat-head em{font-size:6.3px;font-style:normal;font-weight:900;text-align:right}
+.v55-stat-head em.up{color:var(--good)}.v55-stat-head em.down{color:var(--bad)}.v55-stat-head em.flat{color:#617084}
+.v55-bar{position:relative;height:5px;border-radius:999px;background:#1b2636;overflow:hidden}
+.v55-bar>i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:linear-gradient(90deg,#6676df,#78d4c0,#e6c86d);transition:width .3s ease}
+.v55-bar>u{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.28);z-index:2;text-decoration:none}.v55-bar>.mark100{left:50%}.v55-bar>.mark150{left:75%}
+
+.v55-latest{min-width:0;min-height:0;border:1px solid #2a3a51;border-radius:9px;background:#0d141e;padding:4px 5px;overflow:hidden}
+.v55-latest.empty{display:grid;grid-template-rows:14px 1fr}.v55-latest.empty>p{font-size:7.5px;color:var(--muted);margin:2px 0;align-self:center}
+.v55-latest-head{height:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}.v55-latest-head strong{font-size:8.5px}.v55-latest-head span{font-size:6.5px;color:var(--muted)}
+.v55-story-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;height:calc(100% - 14px);min-height:0}
+.v55-story{min-width:0;min-height:0;border:1px solid #26354a;border-left-width:3px;border-radius:6px;padding:3px 4px;background:#101925;display:grid;grid-template-rows:11px minmax(0,1fr) 9px;overflow:hidden}
+.v55-story.good{border-left-color:var(--good);background:#0d1c18}.v55-story.bad{border-left-color:var(--bad);background:#211014}.v55-story.neutral{border-left-color:#7c72ef}
+.v55-story>div{display:flex;align-items:center;gap:3px;min-width:0}.v55-story>div>b{width:10px;height:10px;border-radius:50%;display:grid;place-items:center;background:#202c3d;font-size:5.5px;flex:0 0 auto}.v55-story>div>strong{font-size:7.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v55-story>div>i{font-size:5.5px;font-style:normal;color:#ffbd6e;white-space:nowrap}
+.v55-story p{font-size:6.8px;line-height:1.28;color:#c4cfdf;margin:1px 0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.v55-story small{font-size:5.8px;color:#8797ab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.v55-actions{min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(0,1fr))!important;gap:4px!important}
+.v55-actions .action-card{min-height:0!important;height:auto!important;padding:6px 7px!important}.v55-actions .action-card strong{font-size:9.5px!important}.v55-actions .action-card p{display:block!important;font-size:7px!important;line-height:1.25!important;margin-top:2px!important;overflow:hidden;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical}.v55-actions .action-top{font-size:6.5px!important;margin-bottom:2px!important}
+.v55-actions.v54-zhou{grid-template-rows:repeat(3,minmax(0,1fr))!important}.v55-actions.v54-zhou .zhou-choice:last-child{grid-column:1/-1}
+
+/* 结局：长文判词 + 回放镜头，允许自然滚动。 */
+.v55-end{overflow-y:auto!important;padding-bottom:28px!important}
+.v55-end-hero{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,#121a29,#0d141f);margin-bottom:8px}.v55-end-hero h1{font-size:20px;margin:0 0 3px}.v55-end-hero p{font-size:9px;color:var(--muted);margin:0}
+.v55-end-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:8px}.v55-end-metrics>div{border:1px solid var(--line);border-radius:8px;background:#101722;padding:6px}.v55-end-metrics span{display:block;font-size:7px;color:var(--muted)}.v55-end-metrics strong{font-size:11px}
+.v55-verdict,.v55-highlights{border:1px solid var(--line);border-radius:12px;background:#0f1621;padding:8px;margin-bottom:8px}.v55-verdict>p{font-size:9px;line-height:1.65;color:#cbd5e4;margin:7px 0;padding-bottom:7px;border-bottom:1px dashed rgba(255,255,255,.07)}.v55-verdict>p:last-child{border-bottom:0}.v55-verdict>p.joke{color:#f1c987;background:rgba(241,201,135,.06);border:1px solid rgba(241,201,135,.12);border-radius:8px;padding:7px}
+.v55-highlights{display:grid;gap:5px}.v55-highlights>.section-line{margin-bottom:2px}.v55-highlights article{border-left:3px solid #687590;background:#111925;border-radius:6px;padding:5px 7px}.v55-highlights article.good{border-left-color:var(--good)}.v55-highlights article.bad{border-left-color:var(--bad)}.v55-highlights article b{font-size:8px}.v55-highlights article p{font-size:8px;line-height:1.45;color:#bec9d9;margin:3px 0}.v55-highlights article small{font-size:6.5px;color:#7f90a6}
+
+@media(max-width:640px){
+  .game-screen.v55-game:not(:has(.result-strip)){
+    grid-template-rows:auto 132px minmax(92px,118px) 18px minmax(128px,1fr)!important;
+    gap:4px!important;
+  }
+  .v55-self{min-height:54px;grid-template-columns:38px minmax(90px,1fr) minmax(126px,42%);padding:5px 6px}.v55-self .portrait{width:36px;height:36px;flex-basis:36px}.v55-title strong{font-size:14px}.v55-top5{grid-auto-rows:13px}.v55-top-trait{font-size:5.9px}.v55-top-trait em{font-size:4.9px}
+  .v55-spouse{height:34px;grid-template-columns:27px minmax(0,1fr) auto;padding:2px 6px}.v55-spouse .portrait{width:25px;height:25px;flex-basis:25px}
+  .v55-stats{grid-template-rows:repeat(5,24px)}
+  .v55-story-list{gap:2px}.v55-story{padding:2px 3px}.v55-story p{font-size:6.4px;-webkit-line-clamp:3}.v55-story>div>strong{font-size:6.9px}
+  .v55-actions .action-card{padding:5px 6px!important}.v55-actions .action-card strong{font-size:9px!important}.v55-actions .action-card p{font-size:6.7px!important}
+  .v55-end-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.v55-verdict>p{font-size:8.5px}.v55-highlights article p{font-size:7.5px}
+}
+
+@media(max-width:370px){
+  .game-screen.v55-game:not(:has(.result-strip)){grid-template-rows:auto 122px minmax(86px,105px) 17px minmax(120px,1fr)!important}
+  .v55-self{grid-template-columns:34px minmax(82px,1fr) minmax(110px,40%)}.v55-self .portrait{width:32px;height:32px;flex-basis:32px}.v55-title strong{font-size:13px}.v55-stat-head span{font-size:6.4px}.v55-story p{font-size:6px}.v55-actions .action-card strong{font-size:8.4px!important}
+}
