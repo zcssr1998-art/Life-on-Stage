@@ -1,0 +1,26 @@
+/* V5.3 mobile flow fixes */
+/* When there is no previous-result strip (notably age 1), the grid has only four children.
+   Re-map rows so the action area receives the flexible row instead of the tiny heading row. */
+.game-screen:not(:has(.result-strip)){
+  grid-template-rows:62px 24px minmax(0,1fr) minmax(130px,31%)!important;
+}
+.action-card{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+@media(max-width:640px){
+  .game-screen:not(:has(.result-strip)){
+    grid-template-rows:55px 20px minmax(0,1fr) minmax(118px,29%)!important;
+  }
+  /* Five zhou choices should be comfortable tap targets, not a compressed 15-card grid. */
+  .game-screen:not(:has(.result-strip)) .actions{
+    gap:5px!important;
+  }
+  .game-screen:not(:has(.result-strip)) .zhou-choice{
+    min-height:0;
+    padding:6px 8px!important;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .game-screen:not(:has(.result-strip)) .zhou-choice>strong{font-size:11px!important}
+  .game-screen:not(:has(.result-strip)) .zhou-choice p{display:block!important;font-size:8.5px!important;margin-top:2px!important}
+}
