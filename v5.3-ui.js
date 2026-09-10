@@ -24,8 +24,7 @@
   };
 
   // 根节点事件代理：不再每年给新 DOM 重绑四五个 onclick。
-  // 不做时间型 debounce。resolve 自己已经有 busy 状态锁；时间节流会误吞玩家连续点击，
-  // 在 WebKit 上尤其容易表现成“按钮突然没反应”。
+  // 不做时间型 debounce。resolve 自己已经有 busy 状态锁；时间节流会误吞玩家连续点击。
   if(!A._choiceDelegationInstalled){
     R.addEventListener('click',e=>{
       const b=e.target?.closest?.('.action-card[data-i]');
@@ -44,11 +43,35 @@
     const r=document.getElementById('restartBtn');if(r)r.onclick=()=>{if(confirm('重开当前人生？图鉴和族谱保留。')){A.p=null;A.startView()}};
   };
 
+  // 旧版 deadView 只“返回结算 HTML”，并不会自己把它写进 root。
+  // 活着时由旧 render 处理；死亡时这里明确提交 DOM 状态，杜绝“内部已死、屏幕仍停在上一年”的假卡死。
+  const wireEnding=()=>{
+    const inherit=document.getElementById('inheritBtn');
+    if(inherit&&A.p?.children?.length)inherit.onclick=()=>A.asChild(A.p.children[0]);
+    const fresh=document.getElementById('freshBtn');
+    if(fresh)fresh.onclick=()=>{A.p=null;A.startView()};
+    const share=document.getElementById('shareBtn2');
+    if(share)share.onclick=A.share;
+  };
+
   // 根据当年实际选项数量动态铺满屏幕：普通年 4 格，抓周/特殊节点按实际数量。
   const renderBase=A.render;
   A.render=()=>{
+    if(!A.p)return A.startView();
+    if(!A.p.alive){
+      let html='';
+      try{html=A.deadView()}catch(err){console.error('[Life-on-Stage] deadView build failed',err)}
+      if(!html){
+        html=`<section class="screen end-screen"><div class="end-hero"><div><h1>${A.p.age} 岁 · ${A.p.deathReason||'人生落幕'}</h1><p>人生综合分 ${A.p.score||0}</p></div></div><div class="end-summary"><p>这一生已经结束。</p></div><div class="end-actions"><button class="primary" id="freshBtn">全新人生</button></div></section>`;
+      }
+      R.innerHTML=html;
+      N.classList.add('hidden');
+      wireEnding();
+      return;
+    }
+
     renderBase();
-    if(A.p?.alive&&A.view==='game'){
+    if(A.view==='game'){
       const box=R.querySelector('.actions');
       if(box){
         const n=Math.max(1,A.year?.length||1);
