@@ -1,0 +1,26 @@
+name: Mobile WebKit Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start local site
+        run: |
+          python3 -m http.server 4173 >/tmp/life-stage-http.log 2>&1 &
+          echo $! > /tmp/life-stage-http.pid
+      - name: Run iPhone-sized WebKit long-session test
+        run: npx playwright test tests/webkit-smoke.spec.js --project=webkit
