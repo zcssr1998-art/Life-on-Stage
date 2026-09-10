@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Long-run game smoke test
+        run: node tests/v5-smoke.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
