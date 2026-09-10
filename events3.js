@@ -1,0 +1,42 @@
+events.push(...[
+ {id:'inheritance',cat:'家庭',min:45,max:80,w:2,cond:s=>s.family>62&&!s.tags.has('继承事件'),title:'家族资产开始向下一代转移',text:'它可能不大，也可能成为你后半生资产结构的重要变化。',choices:[
+  ['妥善接手','财富增加，同时承担家庭责任',s=>{let g=30000+R()*(80000+s.luck*5000);s.money+=g;s.family+=4;addTag(s,'继承事件');return`你接手约 ${moneyFmt(g)} 的家庭资产。`}]
+ ]},
+ {id:'friendOpportunity',cat:'关系',min:22,max:55,w:4,cond:s=>s.social>58,title:'一个多年朋友给你带来机会',text:'很多机会不是来自招聘网站，而是来自别人愿不愿意想到你。',choices:[
+  ['一起做','关系资本转化成现实收益',s=>{if(chance(.5+s.social/400+s.luck/500)){let g=20000+R()*90000;s.money+=g;s.exp+=7;s.social+=3;return`合作顺利，你赚到 ${moneyFmt(g)}。`}s.money-=10000;s.happy-=3;return'合作没有跑通，但关系还在。'}],
+  ['不掺杂利益','保留纯粹关系',s=>{s.social+=5;s.happy+=4;return'你选择不和朋友一起做生意。'}]
+ ]},
+ {id:'networkBreak',cat:'关系',min:25,max:60,w:3,cond:s=>s.social<45,title:'你发现自己的人际圈越来越窄',text:'长期只处理工作和家庭，社交网络会自然萎缩。',choices:[
+  ['主动重建连接','花时间认识新的人',s=>{s.social+=14;s.happy+=5;s.money-=5000;return'你重新建立了一批弱连接。'}],
+  ['接受独处','社交更少，但自己的时间更多',s=>{s.social-=4;s.happy+=2;s.disc+=3;return'你接受了一个更安静的生活结构。'}]
+ ]},
+ {id:'midlife',cat:'选择',min:38,max:52,w:5,title:'中年某一天，你突然问自己',text:'如果继续按现在的方式活二十年，你接受吗？',choices:[
+  ['继续当前路线','确定性本身也是价值',s=>{s.stable+=8;s.happy+=2;s.disc+=2;return'你接受了自己选择的人生。'}],
+  ['彻底换一种活法','重新分配时间、城市或职业',s=>{s.money*=.88;s.happy+=10;s.amb+=8;s.stable-=8;addTag(s,'人生重启');return'你主动打断了惯性。'}]
+ ]},
+ {id:'relocate',cat:'选择',min:24,max:62,w:4,title:'另一个城市出现了更合适的生活机会',text:'搬家可能改变成本、职业、人际关系和你每天看到的世界。',choices:[
+  ['搬','用不确定性换新的可能',s=>{let old=s.city;s.city=pick(cities.filter(c=>c!==old));s.money-=20000;s.luck+=3;s.social-=4;s.happy+=4;s.risk+=3;addTag(s,'成年迁徙');return`你从${old}搬到了${s.city}。`}],
+  ['不搬','继续经营现有关系和资源',s=>{s.stable+=5;s.family+=2;return'你留下来了。'}]
+ ]},
+ {id:'burnout',cat:'健康',min:28,max:58,w:4,cond:s=>s.amb>70&&s.health<68,title:'你进入明显的职业倦怠',text:'不是不想赢，而是系统开始无法维持长期高负载。',choices:[
+  ['强制休整','牺牲收入换恢复',s=>{s.money-=Math.max(15000,s.income*2);s.health+=12;s.happy+=8;s.amb-=3;return'你暂停了一段时间，恢复了部分状态。'}],
+  ['继续顶','短期继续产出',s=>{s.health-=12;s.happy-=8;s.income*=1.06;addTag(s,'工作成瘾');return'你继续跑，但身体和情绪都在记账。'}]
+ ]},
+ {id:'careerPeak',cat:'职业',min:40,max:65,w:4,cond:s=>s.exp>35&&(s.tags.has('已工作')||s.tags.has('创业成功')),title:'你进入职业影响力最高的一段时期',text:'经验、人脉和判断力第一次同时成熟。',choices:[
+  ['继续扩大影响力','用更多责任换更高收入',s=>{s.income*=1.28;s.social+=5;s.health-=4;s.amb+=3;addTag(s,'职业巅峰');return'你的职业收入和影响力来到新的台阶。'}],
+  ['开始做减法','不再追求每一次机会',s=>{s.happy+=8;s.health+=4;s.stable+=6;return'你开始主动拒绝一部分机会。'}]
+ ]},
+ {id:'retire',cat:'晚年',min:55,max:74,w:7,cond:s=>s.money>800000&&!s.tags.has('退休'),title:'你已经有资格考虑退休',text:'工作不再完全是生存问题，而变成“值不值得继续”的问题。',choices:[
+  ['退休','停止主动收入，换自由时间',s=>{s.income=0;s.tags.delete('已工作');s.tags.delete('自由职业');addTag(s,'退休');s.happy+=10;s.health+=5;return'你开始把时间还给自己。'}],
+  ['继续做','你还不想退出牌桌',s=>{s.amb+=3;s.money+=s.income*2;return'你决定继续工作。'}]
+ ]},
+ {id:'returnWork',cat:'晚年',min:60,max:78,w:3,cond:s=>s.tags.has('退休')&&s.health>55&&s.exp>35,title:'退休后，有人再次邀请你做事',text:'这次工作更多是因为价值感，而不是生存。',choices:[
+  ['回去做顾问','恢复少量收入和社会连接',s=>{s.income=6000+s.exp*60;s.social+=6;s.happy+=3;addTag(s,'返聘');return'你以更轻的方式重新回到工作中。'}],
+  ['谢绝','继续享受时间自主权',s=>{s.happy+=5;s.health+=2;return'你拒绝了邀请。'}]
+ ]},
+ {id:'legacy',cat:'晚年',min:65,max:90,w:4,title:'你开始认真思考留下些什么',text:'财富、经验、关系和作品，最后都可以被重新分配。',choices:[
+  ['把经验教给年轻人','影响力留下来',s=>{s.social+=6;s.happy+=7;s.money-=5000;addTag(s,'传承经验');return'你开始主动帮助下一代。'}],
+  ['把更多资源留给家庭','家庭关系进一步加强',s=>{s.money*=.92;s.family+=12;s.happy+=4;addTag(s,'家庭传承');return'你提前安排了部分家庭资产。'}],
+  ['继续为自己活','把最后的时间花在体验上',s=>{s.money*=.9;s.happy+=10;s.health+=2;addTag(s,'晚年自由');return'你把时间和钱继续花在自己的体验上。'}]
+ ]}
+]);
