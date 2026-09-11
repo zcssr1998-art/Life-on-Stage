@@ -27,7 +27,7 @@ test('V7 mobile long-session, money audit and fate rewind',async({page})=>{
   await page.locator('[data-action="rewind"]').click();
   await expect(page.locator('[data-action="choice"]')).toHaveCount(4);
   expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBe(target);
-  const saved=await page.evaluate(async()=>{await window.__V7__.runtime.persist.save(window.__V7__.runtime.store.snapshot());const s=await window.__V7__.runtime.persist.load();return!!s&&s.version==='V7'});
+  const saved=await page.evaluate(async()=>{await window.__V7__.runtime.persist.save(window.__V7__.runtime.store.snapshot());const s=await window.__V7__.runtime.persist.load();return!!s&&s.version==='V7'&&s.ui.busy===false});
   expect(saved).toBeTruthy();
 });
 
@@ -46,10 +46,19 @@ test('V7 stale busy save recovers after refresh and remains playable',async({pag
   }
 
   const before=await page.evaluate(async()=>{
-    const runtime=window.__V7__.runtime;
-    const snap=runtime.store.snapshot();
+    const snap=window.__V7__.runtime.store.snapshot();
     snap.ui.busy=true;
-    await runtime.persist.save(snap);
+    await new Promise((resolve,reject)=>{
+      const req=indexedDB.open('life-on-stage-v7',1);
+      req.onerror=()=>reject(req.error);
+      req.onsuccess=()=>{
+        const db=req.result;
+        const tx=db.transaction('kv','readwrite');
+        tx.objectStore('kv').put(snap,'save');
+        tx.oncomplete=()=>{db.close();resolve()};
+        tx.onerror=()=>reject(tx.error);
+      };
+    });
     return{age:snap.age,alive:snap.alive,choices:snap.currentChoices.length};
   });
   expect(before.alive).toBeTruthy();
@@ -62,6 +71,7 @@ test('V7 stale busy save recovers after refresh and remains playable',async({pag
 
   await page.locator('[data-action="choice"]').first().click();
   expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBeGreaterThan(before.age);
+  expect(await page.evaluate(async()=>{const s=await window.__V7__.runtime.persist.load();return s?.ui.busy??true})).toBeFalsy();
 });
 
 test('V7 Pro Max layout scales without dead zones',async({browser})=>{
