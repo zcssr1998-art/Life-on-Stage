@@ -1,0 +1,19 @@
+/* V6.2.1 mobile truthfulness fixes: spouse income is required UI, and all ten states remain visible. */
+@media(max-width:760px){
+  .v62-spouse-work span{display:block!important;font-size:8px!important;color:#8292aa!important;white-space:nowrap}
+  .v62-state-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important}
+  .v62-state:nth-child(n){display:grid!important}
+  .v62-state{grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;gap:1px 3px!important;min-height:34px!important;padding:3px 4px!important}
+  .v62-state span{grid-column:1/-1!important;font-size:8px!important;text-align:left!important}
+  .v62-state b{font-size:8px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .v62-state em{font-size:9px!important;text-align:right}
+}
+@media(max-width:430px){
+  .v62-spouse-work{align-items:flex-start!important}
+  .v62-spouse-work b{font-size:9px!important}
+  .v62-spouse-work span{font-size:7px!important}
+}
+@media(max-height:700px){
+  .v62-state{min-height:28px!important;padding:2px 3px!important}
+  .v62-state span,.v62-state b{font-size:7px!important}
+}
