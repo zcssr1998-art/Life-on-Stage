@@ -6,18 +6,73 @@ export class MoneySystem{
   begin(){const s=this.store.get();this.store.dispatch({type:'RESET_YEAR',opening:s.wealth});}
   post(source:string,label:string,amount:number,note=''){this.store.dispatch({type:'MONEY',source,label,amount,note});}
   careerRoute(id:string|null){return this.base.CAREER_ROUTES.find(x=>x.id===id)||null}
-  annual(){const s=this.store.get();if(s.age<18){this.store.dispatch({type:'FINALIZE_LEDGER'});return;}
-    const route=this.careerRoute(s.careerRoute);const retired=s.age>=67;
-    let netLabor=0;
-    if(route&&s.careerLevel>0&&!retired){const gross=route.salaries[s.careerLevel-1]! *12;const worldMul=.82+s.world.jobs/300+s.world.economy/600;const adjusted=gross*worldMul;const tax=adjusted*(adjusted<180000?.05:adjusted<400000?.10:adjusted<800000?.16:.22);netLabor=adjusted-tax;this.post('salary','税后职业收入',netLabor,`${route.titles[s.careerLevel-1]} · 就业/经济环境已计入`);}
-    if(retired&&s.careerPeak>0){const pension=18000+s.careerPeak*12000;this.post('retirement','退休保障',pension,'根据职业生涯阶段估算');}
-    const partner=s.relationships.find(x=>x.id===s.partnerId&&x.alive);if(partner){const pr=this.careerRoute(partner.careerRoute),salary=pr?.salaries[partner.careerLevel-1]??0;if(salary)this.post('partner','伴侣家庭贡献',salary*12*.18,`${partner.name} 的家庭净贡献`);}
-    let living=s.age<25?30000:s.age<45?48000:s.age<65?60000:52000;if(netLabor>0&&netLabor<100000)living*=.72;living+=Math.max(0,netLabor-90000)*(s.age<35?.55:s.age<55?.50:.45);living+=s.children.filter(c=>s.age-c.birthAge<20&&c.alive).length*12000;if(s.wealth>2_000_000)living+=18000;if(s.wealth>10_000_000)living+=45000;this.post('living','生活与家庭支出',-living,netLabor?'包含随收入变化的生活方式支出':'基础生活成本');
-    const housing=s.tags.includes('有房')?18000:s.age>=22?(netLabor>0&&netLabor<100000?18000:30000):9000;this.post('housing',s.tags.includes('有房')?'住房持有成本':'居住成本',-housing,netLabor>0&&netLabor<100000&&!s.tags.includes('有房')?'低收入阶段默认合租/低成本居住':'');
-    if(s.wealth>500000)this.post('asset_cost','资产与长期责任维护',-Math.min(180000,s.wealth*.010),'资产越多，维护、保险与固定责任越多');
-    const healthCost=(s.age<45?2000:s.age<65?6000:s.age<80?12000:22000)+Math.max(0,55-s.stats.health)*220;this.post('health','医疗与保障',-healthCost);
-    const openingDebt=Math.max(0,-(s.ledger?.opening??0));if(openingDebt)this.post('debt','负债利息',-openingDebt*.045,'只对年初存量债务计息');
-    if(s.tags.includes('投资者')&&s.wealth>50000){const exposure=clamp(.1,.55,.18+(s.stats.risk-50)*.003);const cap=Math.max(0,s.wealth)*exposure;const ret=this.rng.weighted([{r:-.35,w:.06},{r:-.16,w:.14},{r:-.05,w:.18},{r:.04,w:.22},{r:.10,w:.23},{r:.20,w:.12},{r:.38,w:.05}],x=>x.w*(x.r>0?1+(s.stats.luck-50)*.003:1));this.post('investment','投资账户盈亏',cap*ret.r,`投入约${Math.round(cap/10000)}万 · 年回报${Math.round(ret.r*100)}%`);}
+  private afterTax(gross:number){const rate=gross<180000?.05:gross<400000?.10:gross<800000?.16:.22;return gross*(1-rate)}
+  annual(){
+    const s=this.store.get();
+    if(s.age<18){this.store.dispatch({type:'FINALIZE_LEDGER'});return;}
+    const route=this.careerRoute(s.careerRoute),retired=s.age>=67,student=s.age<22&&!s.careerRoute;
+    let netLabor=0,pension=0,partnerContribution=0,familySupport=0;
+
+    if(route&&s.careerLevel>0&&!retired){
+      const gross=route.salaries[s.careerLevel-1]! *12;
+      const worldMul=.82+s.world.jobs/300+s.world.economy/600;
+      const adjusted=gross*worldMul;
+      netLabor=this.afterTax(adjusted);
+      this.post('salary','税后职业收入',netLabor,`${route.titles[s.careerLevel-1]} · 就业/经济环境已计入`);
+    }
+
+    // 18–21 岁通常仍在教育/训练阶段。生活成本必须有来源，而不是默认让所有大学生先背十几万债。
+    if(student){
+      familySupport=clamp(12000,36000,9000+s.stats.family*320);
+      this.post('family_support','家庭 / 奖助支持',familySupport,'求学阶段的家庭支持、奖助金与零散兼职合并估算');
+    }
+
+    if(retired&&s.careerPeak>0){
+      const peakMonthly=route?.salaries[Math.max(0,Math.min(4,s.careerPeak-1))]??0;
+      pension=clamp(30000,220000,24000+peakMonthly*12*.30);
+      this.post('retirement','退休保障',pension,`按职业生涯最高第 ${s.careerPeak} 阶和历史收入水平估算`);
+    }
+
+    const partner=s.relationships.find(x=>x.id===s.partnerId&&x.alive);
+    if(partner){
+      const pr=this.careerRoute(partner.careerRoute),monthly=pr?.salaries[Math.max(0,partner.careerLevel-1)]??0;
+      if(monthly){
+        const partnerNet=this.afterTax(monthly*12);
+        partnerContribution=partnerNet*.30;
+        this.post('partner','伴侣家庭贡献',partnerContribution,`${partner.name} 的收入扣除其个人支出后进入共同家庭的部分`);
+      }
+    }
+
+    const householdIncome=netLabor+pension+partnerContribution+familySupport;
+    let living=student?18000:s.age<25?28000:s.age<45?42000:s.age<65?50000:42000;
+    // 收入低时会主动压缩生活方式；高收入者会消费升级，但不会把新增收入的大半自动花掉。
+    if(!student&&householdIncome>0&&householdIncome<80000)living*=.66;
+    if(s.wealth<0&&householdIncome<100000)living*=.88;
+    living+=Math.max(0,householdIncome-120000)*(s.age<35?.30:s.age<55?.27:.22);
+    living+=s.children.filter(c=>s.age-c.birthAge<20&&c.alive).length*10000;
+    if(s.wealth>2_000_000)living+=14000;if(s.wealth>10_000_000)living+=36000;
+    this.post('living','生活与家庭支出',-living,student?'求学阶段按宿舍/家庭共同生活计':'随家庭收入、子女与生活阶段变化');
+
+    let housing:number;
+    if(student)housing=6000;
+    else if(s.tags.includes('有房'))housing=16000;
+    else if(householdIncome>0&&householdIncome<90000)housing=15000;
+    else housing=s.age>=22?26000:9000;
+    this.post('housing',s.tags.includes('有房')?'住房持有成本':'居住成本',-housing,student?'求学阶段宿舍/与家人同住的边际成本':householdIncome<90000?'低收入阶段默认合租或低成本居住':'');
+
+    if(s.wealth>500000)this.post('asset_cost','资产与长期责任维护',-Math.min(140000,s.wealth*.006),'资产越多，维护、保险与固定责任越多');
+    const healthCost=(student?1500:s.age<45?2000:s.age<65?5500:s.age<80?10000:18000)+Math.max(0,55-s.stats.health)*180;
+    this.post('health','医疗与保障',-healthCost);
+
+    const openingDebt=Math.max(0,-(s.ledger?.opening??0));
+    if(openingDebt)this.post('debt','负债利息',-openingDebt*.038,'只对年初存量债务计息；负债仍会产生真实成本');
+
+    if(s.tags.includes('投资者')&&s.wealth>50000){
+      const exposure=clamp(.1,.55,.18+(s.stats.risk-50)*.003);
+      const cap=Math.max(0,s.wealth)*exposure;
+      const ret=this.rng.weighted([{r:-.35,w:.06},{r:-.16,w:.14},{r:-.05,w:.18},{r:.04,w:.22},{r:.10,w:.23},{r:.20,w:.12},{r:.38,w:.05}],x=>x.w*(x.r>0?1+(s.stats.luck-50)*.003:1));
+      this.post('investment','投资账户盈亏',cap*ret.r,`投入约${Math.round(cap/10000)}万 · 年回报${Math.round(ret.r*100)}%`);
+    }
     this.store.dispatch({type:'FINALIZE_LEDGER'});
   }
 }
