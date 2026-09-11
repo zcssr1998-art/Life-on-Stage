@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test('mobile WebKit survives long sessions and validates V5.5 narrative UI', async ({ page }) => {
+test('mobile WebKit survives long sessions and validates V5.7 adaptive UI', async ({ page }) => {
   await page.goto('/?e2e=1', { waitUntil: 'networkidle' });
   await expect(page.locator('#startBtn')).toBeVisible();
 
@@ -36,6 +36,41 @@ test('mobile WebKit survives long sessions and validates V5.5 narrative UI', asy
   const marks = await page.locator('.v55-bar .mark100').count();
   expect(marks).toBe(10);
 
+  // V5.7 contract: compact phones stay dense, larger/taller phones must actually spend the extra space
+  // on larger readable type instead of keeping the old micro-fonts.
+  await page.setViewportSize({width:375,height:667});
+  const compact = await page.evaluate(() => {
+    const card=document.querySelector('.v55-actions .action-card strong');
+    const stat=document.querySelector('.v55-stat-head span');
+    const screen=document.querySelector('.game-screen');
+    return {
+      card:parseFloat(getComputedStyle(card).fontSize),
+      stat:parseFloat(getComputedStyle(stat).fontSize),
+      overflow:screen.scrollHeight-screen.clientHeight
+    };
+  });
+  expect(compact.overflow).toBeLessThanOrEqual(5);
+
+  await page.setViewportSize({width:430,height:932});
+  const large = await page.evaluate(() => {
+    const card=document.querySelector('.v55-actions .action-card strong');
+    const stat=document.querySelector('.v55-stat-head span');
+    const story=document.querySelector('.v55-latest-head strong');
+    const screen=document.querySelector('.game-screen');
+    return {
+      card:parseFloat(getComputedStyle(card).fontSize),
+      stat:parseFloat(getComputedStyle(stat).fontSize),
+      story:parseFloat(getComputedStyle(story).fontSize),
+      overflow:screen.scrollHeight-screen.clientHeight
+    };
+  });
+  expect(large.card).toBeGreaterThan(compact.card+2);
+  expect(large.stat).toBeGreaterThan(compact.stat+2);
+  expect(large.story).toBeGreaterThanOrEqual(10);
+  expect(large.overflow).toBeLessThanOrEqual(5);
+
+  // Continue the long-session regression at a common iPhone-sized viewport.
+  await page.setViewportSize({width:390,height:844});
   await page.locator('.action-card[data-i]').first().click();
   await page.waitForFunction(() => window.APP?.p?.age === 2 || !window.APP?.p?.alive);
 
