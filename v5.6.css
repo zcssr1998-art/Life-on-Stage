@@ -1,0 +1,15 @@
+/* V5.6 — accountable wealth ledger */
+.v56-hudpack{display:grid;gap:4px;min-width:0}
+.v56-finance-strip{min-width:0;height:20px;border:1px solid #2a3b53;border-radius:7px;background:#0d1621;padding:2px 5px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:5px;text-align:left;color:#dce6f4;overflow:hidden}
+.v56-finance-strip.empty{opacity:.78}
+.v56-finance-strip>b{font-size:6.8px;white-space:nowrap}.v56-finance-strip>b em{font-style:normal;margin-left:3px}.v56-finance-strip>span{min-width:0;display:flex;gap:5px;overflow:hidden;white-space:nowrap}.v56-finance-strip>span i{font-size:6.1px;font-style:normal;white-space:nowrap}.v56-finance-strip>u{font-size:5.7px;color:#6f8199;text-decoration:none;white-space:nowrap}
+.v56-finance-strip .up,.v56-ledger-list .up{color:var(--good)}.v56-finance-strip .down,.v56-ledger-list .down{color:var(--bad)}
+
+.v56-finance-history{min-height:0}.v56-ledger-list{display:grid;gap:4px;max-height:240px;overflow:auto}.v56-ledger-list article{border:1px solid #27364a;border-radius:8px;background:#0e1620;padding:5px 6px}.v56-ledger-list article>div{display:grid;grid-template-columns:42px 76px minmax(0,1fr);gap:5px;align-items:center}.v56-ledger-list b{font-size:7.5px}.v56-ledger-list strong{font-size:8px}.v56-ledger-list span{font-size:6.5px;color:#7e8da1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v56-ledger-list p{font-size:6.8px;line-height:1.35;color:#b5c1d1;margin:3px 0 0}.v56-ledger-empty{font-size:7px;color:#74849a;padding:6px;border:1px dashed #26364a;border-radius:7px}
+
+@media(max-width:640px){
+  .v56-finance-strip{height:19px;padding:2px 4px;gap:4px}.v56-finance-strip>b{font-size:6.3px}.v56-finance-strip>span{gap:4px}.v56-finance-strip>span i{font-size:5.7px}.v56-finance-strip>u{display:none}
+}
+@media(max-width:370px){
+  .v56-finance-strip>span i:nth-child(n+4){display:none}
+}
