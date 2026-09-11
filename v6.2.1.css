@@ -16,4 +16,15 @@
 @media(max-height:700px){
   .v62-state{min-height:30px!important;padding:2px 3px!important}
   .v62-state span,.v62-state b{font-size:9px!important}
+
+  /* 宿命奇点是专门的决策场景：不让上一年度叙事和次要信息挤掉四个真正需要点击的分支。 */
+  .v55-game:has(.v61-singularity-head) .v62-latest{display:none!important}
+  .v55-game:has(.v61-singularity-head) .v62-spouse-card p{display:none!important}
+  .v55-game:has(.v61-singularity-head) .v56-finance-strip span,
+  .v55-game:has(.v61-singularity-head) .v56-finance-strip u{display:none!important}
+  .v55-game:has(.v61-singularity-head) .v56-finance-strip{min-height:24px!important;padding-top:3px!important;padding-bottom:3px!important}
+  .v55-game:has(.v61-singularity-head) .v6-world p,
+  .v55-game:has(.v61-singularity-head) .v6-world-pills{display:none!important}
+  .v55-game:has(.v61-singularity-head) .v6-world{min-height:28px!important;height:28px!important;padding:4px 7px!important;overflow:hidden!important}
+  .v55-game:has(.v61-singularity-head) .v61-singularity-head{margin-top:0!important}
 }
