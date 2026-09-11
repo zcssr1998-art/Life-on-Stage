@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path');
 global.window=global;global.addEventListener=()=>{};
 global.document={getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[]};global.navigator={};global.location={href:'https://example.test/'};global.confirm=()=>true;
-class StorageMock{constructor(){this.m=new Map()}getItem(k){return this.m.has(k)?this.m.get(k):null}setItem(k,v){this.m.set(k,String(v))}removeItem(k){this.m.delete(k)}}global.localStorage=new StorageMock();
+class StorageMock{constructor(){this.m=new Map()}getItem(k){return this.m.has(k)?this.m.get(k):null}setItem(k,v){this.m.set(k,String(v))}removeItem(k){this.m.delete(k)}clear(){this.m.clear()}}global.localStorage=new StorageMock();
 const files=['v3-core.js','ev1.js','ev2.js','ev3.js','ev4.js','ev5.js','ev6.js','ev7.js','ev8.js','v4-data.js','v5-data.js','v5-engine.js','v5-patch.js','v5.2-hotfix.js','v5.3-hotfix.js','v5.4-data.js','v5.4-hotfix.js','v5.4-balance.js','v5.5-events.js','v5.5-engine.js','v5.6-money.js','v6-fate.js','v6.1-fate.js'];
 for(const f of files)vm.runInThisContext(fs.readFileSync(path.join(process.cwd(),f),'utf8'),{filename:f});
 const A=global.APP,L=global.LIFE;A.render=()=>{};A.note=()=>{};
@@ -43,13 +43,14 @@ const snapshots={};
 for(let i=0;i<4;i++){
   if(i>0){A.p.alive=false;A.v61RewindSingularity();}
   const action=A.year[i]||A.year.find(x=>x._v61Branch===['venture','scholar','bond','voyage'][i]);
-  const branch=action._v61Branch;A.deathCheck=()=>false;A.resolve(action);snapshots[branch]={tags:[...A.p.tags],salary:A.p.salaryMul,spouse:!!A.p.spouse,vol:A.p.economicVolatility||1,investor:A.p.tags.includes('投资者')};
+  const branch=action._v61Branch,beforeVol=A.p.economicVolatility||1;
+  A.deathCheck=()=>false;A.resolve(action);snapshots[branch]={tags:[...A.p.tags],salary:A.p.salaryMul,spouse:!!A.p.spouse,vol:A.p.economicVolatility||1,beforeVol,investor:A.p.tags.includes('投资者')};
 }
 A.deathCheck=realDeath;
 if(!snapshots.venture.investor)throw new Error('venture branch did not open investor path');
 if(!(snapshots.scholar.salary>snapshots.bond.salary))throw new Error('scholar and bond branches are not economically distinct');
 if(!snapshots.bond.spouse)throw new Error('bond branch did not bind a companion');
-if(!(snapshots.voyage.vol>=1))throw new Error('voyage branch volatility state missing');
+if(!(snapshots.voyage.vol>snapshots.voyage.beforeVol))throw new Error(`voyage branch did not increase volatility: ${snapshots.voyage.beforeVol} -> ${snapshots.voyage.vol}`);
 
 // 6) Player-facing stat masking helpers must not leak exact attribute numbers.
 const masked=A.v61MaskChanges('健康+7 · 幸福-3 · 财富+¥2.0万 · 智力+4');
