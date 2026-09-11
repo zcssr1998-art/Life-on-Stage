@@ -1,6 +1,52 @@
 const { test, expect } = require('@playwright/test');
 
-test('mobile WebKit survives long sessions and validates V5.7 adaptive UI', async ({ page }) => {
+const BASE='http://127.0.0.1:4173/?e2e=1';
+
+async function openGame(page){
+  await page.goto(BASE,{waitUntil:'networkidle'});
+  await expect(page.locator('#startBtn')).toBeVisible();
+  await page.locator('#startBtn').click();
+  await page.evaluate(()=>{window.APP.deathCheck=()=>false});
+  await expect(page.locator('.game-screen')).toBeVisible();
+}
+
+async function uiMetrics(page){
+  return page.evaluate(()=>{
+    const card=document.querySelector('.v55-actions .action-card strong');
+    const stat=document.querySelector('.v55-stat-head span');
+    const story=document.querySelector('.v55-latest-head strong');
+    const screen=document.querySelector('.game-screen');
+    const root=getComputedStyle(document.documentElement);
+    return {
+      innerWidth:window.innerWidth,innerHeight:window.innerHeight,
+      card:parseFloat(getComputedStyle(card).fontSize),
+      stat:parseFloat(getComputedStyle(stat).fontSize),
+      story:parseFloat(getComputedStyle(story).fontSize),
+      choiceVar:root.getPropertyValue('--v57-choice-title').trim(),
+      overflow:screen.scrollHeight-screen.clientHeight
+    };
+  });
+}
+
+test('V5.7 adaptive UI spends extra room on larger phones',async({browser})=>{
+  const ua='Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1';
+  const smallCtx=await browser.newContext({viewport:{width:375,height:667},screen:{width:375,height:667},deviceScaleFactor:2,isMobile:true,hasTouch:true,userAgent:ua});
+  const largeCtx=await browser.newContext({viewport:{width:430,height:932},screen:{width:430,height:932},deviceScaleFactor:3,isMobile:true,hasTouch:true,userAgent:ua});
+  try{
+    const small=await smallCtx.newPage(),large=await largeCtx.newPage();
+    await openGame(small);await openGame(large);
+    const a=await uiMetrics(small),b=await uiMetrics(large);
+    expect(a.innerWidth).toBe(375);expect(b.innerWidth).toBe(430);
+    expect(a.innerHeight).toBe(667);expect(b.innerHeight).toBe(932);
+    expect(b.card).toBeGreaterThanOrEqual(a.card+2);
+    expect(b.stat).toBeGreaterThanOrEqual(a.stat+2);
+    expect(b.story).toBeGreaterThanOrEqual(a.story+2);
+    expect(a.overflow).toBeLessThanOrEqual(5);
+    expect(b.overflow).toBeLessThanOrEqual(5);
+  }finally{await smallCtx.close();await largeCtx.close();}
+});
+
+test('mobile WebKit survives long sessions and validates V5.7 game UI', async ({ page }) => {
   await page.goto('/?e2e=1', { waitUntil: 'networkidle' });
   await expect(page.locator('#startBtn')).toBeVisible();
 
@@ -24,7 +70,6 @@ test('mobile WebKit survives long sessions and validates V5.7 adaptive UI', asyn
   await expect(page.locator('.start-traits .trait-chip')).toHaveCount(5);
   await page.locator('#rerollBtn').click();
   await page.locator('#startBtn').click();
-
   await page.evaluate(() => { window.APP.deathCheck = () => false; });
 
   await expect(page.locator('.action-card[data-i]')).toHaveCount(5);
@@ -33,38 +78,6 @@ test('mobile WebKit survives long sessions and validates V5.7 adaptive UI', asyn
   await expect(page.locator('.v55-spouse')).toHaveCount(0);
   expect(await page.locator('.v55-bar .mark100').count()).toBe(10);
 
-  await page.setViewportSize({width:375,height:667});
-  const compact = await page.evaluate(() => {
-    const card=document.querySelector('.v55-actions .action-card strong');
-    const stat=document.querySelector('.v55-stat-head span');
-    const screen=document.querySelector('.game-screen');
-    return {
-      card:parseFloat(getComputedStyle(card).fontSize),
-      stat:parseFloat(getComputedStyle(stat).fontSize),
-      overflow:screen.scrollHeight-screen.clientHeight
-    };
-  });
-  expect(compact.overflow).toBeLessThanOrEqual(5);
-
-  await page.setViewportSize({width:430,height:932});
-  const large = await page.evaluate(() => {
-    const card=document.querySelector('.v55-actions .action-card strong');
-    const stat=document.querySelector('.v55-stat-head span');
-    const story=document.querySelector('.v55-latest-head strong');
-    const screen=document.querySelector('.game-screen');
-    return {
-      card:parseFloat(getComputedStyle(card).fontSize),
-      stat:parseFloat(getComputedStyle(stat).fontSize),
-      story:parseFloat(getComputedStyle(story).fontSize),
-      overflow:screen.scrollHeight-screen.clientHeight
-    };
-  });
-  expect(large.card).toBeGreaterThanOrEqual(compact.card+2);
-  expect(large.stat).toBeGreaterThanOrEqual(compact.stat+2);
-  expect(large.story).toBeGreaterThanOrEqual(10);
-  expect(large.overflow).toBeLessThanOrEqual(5);
-
-  await page.setViewportSize({width:390,height:844});
   await page.locator('.action-card[data-i]').first().click();
   await page.waitForFunction(() => window.APP?.p?.age === 2 || !window.APP?.p?.alive);
 
