@@ -6,7 +6,15 @@ import type {GameState} from './types.js';
 
 const root=document.getElementById('app');if(!root)throw new Error('#app missing');
 
-const persist=new BrowserPersistence();
+class SafeBrowserPersistence extends BrowserPersistence{
+  override async save(state:GameState){
+    const clean=structuredClone(state);
+    clean.ui={...clean.ui,busy:false};
+    await super.save(clean);
+  }
+}
+
+const persist=new SafeBrowserPersistence();
 let saved=await persist.load();
 
 // UI flags are transient runtime state. Older V7 saves may contain busy=true because
