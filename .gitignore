@@ -1,0 +1,5 @@
+node_modules/
+v7/dist/
+v7/generated/
+playwright-report/
+test-results/

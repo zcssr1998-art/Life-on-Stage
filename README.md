@@ -1,20 +1,25 @@
-# 人生随机实验室 V2
+# Life on Stage / 人生随机实验室
 
-一个纯前端、无需服务器的人生随机模拟游戏。
+当前主线：**V7 · Engine Rewrite**。
 
-- 45 个事件/经历定义（V1 为 21）
-- 16 种家庭出身
-- 20 种天赋
-- 20 种缺陷
-- 14 种人格
-- 20 个出生/迁徙城市
-- 6 种世界时代
-- 10 个持续变化的人生属性
-- 条件事件、重复宏观事件、隐藏标签、事件链、多结局
-- 本地存档
-- 手机/桌面自适应
-- 分享按钮
+V7 将旧版逐层 hotfix 的运行时彻底拆开：单一 GameState、TypeScript strict、独立财富/职业/关系/世界/命运/死亡系统、数据驱动事件、按年龄懒加载事件包、IndexedDB 存档，以及部署前自动人生模拟。
 
-游戏入口：`index.html`
+- 在线版：`https://zcssr1998-art.github.io/Life-on-Stage/`
+- 自动模拟仪表盘：`/v7/diagnostics.html`
+- 架构说明：`v7/ARCHITECTURE.md`
 
-GitHub Pages 默认地址：`https://zcssr1998-art.github.io/Life-on-Stage/`
+## 本地构建
+
+```bash
+npm install
+npm run build:v7
+python3 -m http.server 4173
+```
+
+## 质量门
+
+```bash
+npm run test:v7
+```
+
+每次 Pages 部署必须通过严格 TypeScript 编译、旧内容数据化导出、真实 V7 全生命周期模拟和移动 WebKit 回归。Nightly 还会跑更大的 Monte Carlo。

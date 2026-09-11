@@ -1,0 +1,27 @@
+import type {ActionChoice,BaseContent,EffectOp,Relationship,RelationRole} from '../types.js';
+import {RNG,Store} from '../core.js';
+const clamp=(a:number,b:number,v:number)=>Math.max(a,Math.min(b,v));
+const names=['林澈','沈宁','周野','顾遥','许岚','陈川','苏梨','陆森','夏霁','程砚','唐绫','江燃','宋屿','闻溪','秦昭','姜禾','谢临','温遥','叶川','乔宁'];
+export class RelationshipSystem{
+  constructor(private store:Store,private base:BaseContent,private rng:RNG){}
+  newPerson(role:RelationRole='认识的人'):Relationship{const s=this.store.get();const route=this.rng.pick(this.base.CAREER_ROUTES);const gap=this.rng.int(-4,5);return{id:`rel_${s.seed}_${s.age}_${this.rng.int(1000,9999)}`,name:this.rng.pick(names),gender:this.rng.pick(['男','女']),avatar:this.rng.int(0,29),metAge:s.age,ageGap:gap,affinity:role==='伴侣'?72:this.rng.int(8,24),sharedEvents:role==='伴侣'?3:1,role,alive:true,careerRoute:route.id,careerLevel:clamp(1,4,1+Math.floor(Math.max(0,s.age-22)/12)+this.rng.int(-1,1)),history:[{age:s.age,text:'你们第一次真正认识。'}]};}
+  encounterChoice():ActionChoice{const r=this.newPerson();return{id:`social:meet:${r.id}`,sourceEvent:'social_meet',category:'社交',title:`偶遇 ${r.name}`,desc:'一次并不起眼的相遇。要不要多聊几句？',hint:'这个人可能从此进入你的关系网',outcomes:[{weight:1,text:`你和${r.name}聊得比预计久。`,tone:'good',ops:[{type:'relationshipCreate',relation:'认识的人'}]}],meta:{npc:r}};}
+  followupChoice(r:Relationship):ActionChoice{const s=this.store.get();const hostile=r.affinity<0;return{id:`social:follow:${r.id}:${s.age}`,sourceEvent:'social_follow',category:'关系',title:hostile?`又和 ${r.name} 撞上了`:`${r.name} 主动联系你`,desc:hostile?'旧摩擦没有完全过去。':'你们的关系还有继续往前走的空间。',hint:'关系不是一次事件，而是共同经历叠出来的',outcomes:[{weight:hostile?3:7,text:hostile?'这次至少没有继续恶化。':'你们又多了一段共同经历。',tone:hostile?'neutral':'good',ops:[{type:'relationshipAffinity',id:r.id,delta:hostile?7:18,shared:1}]},{weight:hostile?6:2,text:hostile?'话没说两句就又翻旧账。':'这次见面有点尴尬，距离反而远了。',tone:'bad',ops:[{type:'relationshipAffinity',id:r.id,delta:-12,shared:1}]}]};}
+  romanceChoice(r:Relationship):ActionChoice{return{id:`social:romance:${r.id}`,sourceEvent:'social_romance',category:'关系',title:`你和 ${r.name} 的关系到了要命名的时候`,desc:'继续装作只是朋友，似乎已经有点勉强。',hint:'可能成为伴侣，也可能让关系变复杂',outcomes:[{weight:7,text:`你们确认了关系。${r.name}从此不再只是关系网里的一个名字。`,tone:'good',ops:[{type:'partnerSet',id:r.id},{type:'relationshipAffinity',id:r.id,delta:12,shared:1}]},{weight:3,text:'你们都没往前迈那一步，关系停在了一个微妙位置。',tone:'neutral',ops:[{type:'relationshipAffinity',id:r.id,delta:-4,shared:1}]}]};}
+  inject(choices:ActionChoice[]):ActionChoice[]{const s=this.store.get();if(s.age<18)return choices;const living=s.relationships.filter(x=>x.alive);let c:ActionChoice|null=null;if(!s.partnerId){const candidate=living.filter(x=>x.affinity>=45&&x.sharedEvents>=2).sort((a,b)=>b.affinity-a.affinity)[0];if(candidate&&this.rng.next()<.82)c=this.romanceChoice(candidate);else if(living.length<10&&this.rng.next()<.66)c=this.encounterChoice();else if(living.length&&this.rng.next()<.80)c=this.followupChoice(this.rng.pick(living));}else if(living.length&&this.rng.next()<.30)c=this.followupChoice(this.rng.pick(living));if(!c)return choices;const out=[...choices];const first=this.rng.int(0,Math.max(0,out.length-1));out[first]=c;if(!s.partnerId&&s.age>=24&&out.length>=4&&this.rng.next()<.68){const live2=this.store.get().relationships.filter(x=>x.alive);const alt=live2.length?this.followupChoice(this.rng.pick(live2)):this.encounterChoice();let j=this.rng.int(0,out.length-1);if(j===first)j=(j+1)%out.length;out[j]=alt;}return out;}
+  materialize(choice:ActionChoice,ops:EffectOp[]):EffectOp[]{if(choice.sourceEvent==='social_meet'&&choice.meta?.npc){const npc=choice.meta.npc as Relationship;this.store.dispatch({type:'REL_ADD',value:npc});return ops.filter(x=>x.type!=='relationshipCreate');}return ops;}
+  tick(){const s=this.store.get();for(const r of s.relationships.filter(x=>x.alive)){
+      if(this.rng.next()<.035+Math.max(0,s.age+r.ageGap-70)*.004){this.store.dispatch({type:'REL_DEATH',id:r.id,deathAge:Math.max(18,s.age-r.ageGap)});continue;}
+      if(r.careerLevel<5&&this.rng.next()<.07)this.store.dispatch([{type:'REL_DELTA',id:r.id,history:'工作上往前走了一步。'},{type:'REL_CAREER',id:r.id,level:r.careerLevel+1}]);
+      else if(this.rng.next()<.08)this.store.dispatch({type:'REL_DELTA',id:r.id,history:this.rng.pick(['这一年过得很平稳。','工作有些低谷，但还撑得住。','开始把更多精力放在生活上。','认识了新的圈内朋友。'])});
+    }
+    const alive=this.store.get().relationships.filter(x=>x.alive);if(alive.length>=2&&this.rng.next()<.12){const [a,b]=this.rng.shuffle(alive).slice(0,2);if(a&&b)this.store.dispatch({type:'SOCIAL_LINK',a:a.id,b:b.id,linkType:this.rng.next()<.82?'认识':'不对付'});}
+  }
+  afterlives(){const s=this.store.get();return [...s.relationships].sort((a,b)=>((b.role==='伴侣'?1000:0)+b.affinity*6+b.sharedEvents*8)-((a.role==='伴侣'?1000:0)+a.affinity*6+a.sharedEvents*8)).slice(0,5).map(r=>{
+      const job=this.base.CAREER_ROUTES.find(x=>x.id===r.careerRoute)?.titles[r.careerLevel-1]??'普通工作';
+      if(!r.alive)return{...r,epilogue:`${r.name} 已经先你一步离开。你们共同经历的那些年份，后来仍被其他人偶尔提起。`};
+      if(r.role==='伴侣'||r.id===s.partnerId)return{...r,epilogue:`你死后，${r.name}继续以${job}的身份生活。TA没有把你变成一句墓志铭，而是把共同生活留下的习惯带进了后来的很多年。`};
+      if(r.affinity>=70)return{...r,epilogue:`${r.name}在你的葬礼上站了很久。后来TA继续做${job}，但提起真正改变过自己的人时，你始终排在很前面。`};
+      if(r.affinity<0)return{...r,epilogue:`你死后，${r.name}没有突然把旧账一笔勾销。可几年以后再有人提起你，TA说得最多的反而不是恨，而是“那个人确实很难忘”。`};
+      return{...r,epilogue:`${r.name}继续过自己的生活。你不是TA人生唯一的主角，但你们共同出现过的那几段年份没有彻底消失。`};});}
+}

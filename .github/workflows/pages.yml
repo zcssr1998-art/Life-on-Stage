@@ -1,19 +1,15 @@
-name: Deploy Life on Stage to GitHub Pages
-
+name: Deploy Life on Stage V7 to GitHub Pages
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
-
 jobs:
   deploy:
     environment:
@@ -21,20 +17,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Long-run game smoke test
-        run: node tests/v5-smoke.js
-      - name: Wealth ledger regression test
-        run: node tests/v5.6-money-smoke.js
-      - name: V6 fate regression test
-        run: node tests/v6-fate-smoke.js
-      - name: V6.1 singularity regression test
-        run: node tests/v6.1-fate-smoke.js
-      - name: V6.2 career and spouse regression test
-        run: node tests/v6.2-career-smoke.js
-      - name: V6.3 economy and social graph regression test
-        run: node tests/v6.3-social-money-smoke.js
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Install V7 build dependency
+        run: npm install --no-audit --no-fund
+      - name: V7 typecheck, content migration and simulation regression
+        run: npm run test:v7
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:

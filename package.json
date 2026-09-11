@@ -1,0 +1,11 @@
+{
+  "name":"life-on-stage-v7",
+  "private":true,
+  "type":"module",
+  "scripts":{
+    "prepare:v7":"node scripts/export-v7-content.mjs",
+    "build:v7":"npm run prepare:v7 && tsc -p v7/tsconfig.json",
+    "test:v7":"npm run build:v7 && node scripts/v7-sim.mjs"
+  },
+  "devDependencies":{"typescript":"5.8.3"}
+}
