@@ -2,11 +2,11 @@ import type {ActionChoice,ActionResponse,BaseContent,EffectOp,GameState,LegacyEv
 import {RNG} from './core.js';
 
 export interface ContentProvider{base():Promise<BaseContent>;events(age:number):Promise<LegacyEvent[]>;}
-const stage=(age:number)=>age<=12?'childhood':age<=22?'youth':age<=59?'adult':'senior';
+export const ageStage=(age:number)=>age<=2?'infant':age<=6?'preschool':age<=12?'child':age<=17?'teen':age<=24?'young':age<=34?'adult':age<=49?'mid':age<=64?'mature':age<=79?'senior':'elder';
 export class BrowserContentProvider implements ContentProvider{
   private b?:BaseContent;private cache=new Map<string,LegacyEvent[]>();
   async base(){if(!this.b)this.b=await fetch(new URL('../generated/base.json',import.meta.url)).then(r=>r.json());return this.b!;}
-  async events(age:number){const s=stage(age);if(!this.cache.has(s))this.cache.set(s,await fetch(new URL(`../generated/events-${s}.json`,import.meta.url)).then(r=>r.json()));return this.cache.get(s)!;}
+  async events(age:number){const s=ageStage(age);if(!this.cache.has(s))this.cache.set(s,await fetch(new URL(`../generated/events-${s}.json`,import.meta.url)).then(r=>r.json()));return this.cache.get(s)!;}
 }
 
 export const requirement=(r:any={}):Requirement=>({
