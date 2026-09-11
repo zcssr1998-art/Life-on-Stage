@@ -26,6 +26,7 @@ export interface MetaProgress{
 }
 export interface RunFlags{
   echo?:string;zhouResult?:ResultRarity;endingId?:string;endingTitle?:string;metaFinalized?:boolean;
+  themeSeen?:Record<string,number>;recentCategories?:string[];
 }
 export interface GameState{
   version:'V7';id:string;seed:number;name:string;gender:Gender;avatar:number;age:number;alive:boolean;deathReason:string;
@@ -60,5 +61,6 @@ export interface ActionChoice{
   outcomes:Outcome[];responses?:ActionResponse[];meta?:Record<string,unknown>;
 }
 export interface LegacyOption{label:string;hint?:string;text?:string;effects?:Partial<Stats>;addTags?:string[];requires?:any;special?:Record<string,any>;results?:any[];}
-export interface LegacyEvent{id:string;category:string;minAge:number;maxAge:number;title:string;desc:string;options:LegacyOption[];requires?:any;weight?:number;hidden?:boolean;repeatable?:boolean;cooldown?:number;}
-export interface BaseContent{ATTR:Record<string,{name:string;tip:string}>;WORLDS:any[];BACKGROUNDS:any[];PERSONALITIES:any[];TALENTS:any[];FLAWS:any[];TRAITS:any[];RARITY:Record<string,any>;ZHOU_CHOICES:any[];CAREER_ROUTES:CareerRoute[];}
+export interface LegacyEvent{id:string;category:string;minAge:number;maxAge:number;title:string;desc:string;options:LegacyOption[];requires?:any;weight?:number;hidden?:boolean;repeatable?:boolean;cooldown?:number;theme?:string;stageTag?:string;}
+export interface MicroStoryDef{min:number;max:number;title:string;text:string;tone:Tone;effects?:Partial<Stats>;}
+export interface BaseContent{ATTR:Record<string,{name:string;tip:string}>;WORLDS:any[];BACKGROUNDS:any[];PERSONALITIES:any[];TALENTS:any[];FLAWS:any[];TRAITS:any[];RARITY:Record<string,any>;ZHOU_CHOICES:any[];CAREER_ROUTES:CareerRoute[];MICRO_STORIES?:MicroStoryDef[];}
