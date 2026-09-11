@@ -1,5 +1,7 @@
-name: V7 Mobile WebKit Smoke
+name: V7 Browser Regression
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -24,5 +26,5 @@ jobs:
         run: |
           python3 -m http.server 4173 >/tmp/life-stage-http.log 2>&1 &
           echo $! > /tmp/life-stage-http.pid
-      - name: Run V7 iPhone WebKit regression
+      - name: Run V7 desktop/mobile refresh-resume regression
         run: npx playwright test tests/v7-webkit.spec.js --project=webkit
