@@ -2,6 +2,8 @@
   const A=window.APP,L=window.LIFE;
   if(!A||!L)return;
   L.VERSION='V6.1';
+  // V6.1 只暴露一个正式回溯点：拉刻西斯节点。其它因果节点继续后台运行，但不再给玩家多个“读档点”。
+  A.v6ForkBlock=()=>'';
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const TIP={
     health:'身体状态会影响疾病、受伤、恢复和寿命，但你不会知道命运后台的精确概率。',
