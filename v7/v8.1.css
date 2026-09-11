@@ -1,20 +1,46 @@
-/* V8.1 player-facing cleanup: rarity hierarchy + collision-proof HUD */
-:root{--mythic-a:#ff4fc8;--mythic-b:#9b5cff;--prism-a:#ff53d7;--prism-b:#8c63ff;--prism-c:#53e4ff}
-/* Mythic and Prismatic are intentionally NOT the same visual tier. */
-.trait-card.r-SSS{--r1:var(--mythic-a);--r2:var(--mythic-b);border-color:rgba(215,91,255,.72);background:linear-gradient(145deg,rgba(63,20,75,.64),rgba(22,15,43,.94));box-shadow:0 0 0 1px rgba(239,90,255,.13) inset,0 10px 30px rgba(135,49,175,.15)}
-.trait-card.r-SSS::before{content:'◆';color:#f5a8ff;text-shadow:0 0 14px rgba(231,93,255,.6)}
-.trait-card.r-SSS .trait-rarity{background:linear-gradient(90deg,#ff86df,#b38cff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.trait.r-SSS{border-color:rgba(211,90,255,.58);background:linear-gradient(120deg,rgba(112,38,127,.26),rgba(73,40,128,.24));box-shadow:0 0 14px rgba(166,66,214,.12)}
-.trait.r-SSS i{color:#ec9dff}
-.trait-card.r-P{--r1:var(--prism-a);--r2:var(--prism-b);position:relative;border-color:transparent;background:linear-gradient(#111020,#111020) padding-box,linear-gradient(120deg,#ff4ecb,#9c64ff,#4de3ff,#ff76b7) border-box;background-size:100% 100%,260% 260%;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 0 32px rgba(188,83,255,.24);animation:prismaticShift 5s linear infinite}
-.trait-card.r-P::before{content:'✦';color:#fff;text-shadow:0 0 8px #ff6cdb,0 0 16px #7b83ff,0 0 24px #49ddff;animation:prismaticStar 2.2s ease-in-out infinite}
-.trait-card.r-P::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.22) 48%,transparent 66%);transform:translateX(-120%);animation:prismaticSweep 4.8s ease-in-out infinite}
-.trait-card.r-P .trait-rarity{background:linear-gradient(90deg,#ff78df,#bd8cff,#68e9ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;letter-spacing:.08em}
-.trait.r-P{border-color:rgba(142,128,255,.68);background:linear-gradient(110deg,rgba(255,66,202,.21),rgba(117,80,255,.23),rgba(64,213,255,.18));box-shadow:0 0 18px rgba(152,93,255,.22)}
-.trait.r-P i{background:linear-gradient(90deg,#ff81e1,#b994ff,#6be9ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
-@keyframes prismaticShift{0%{background-position:0 0,0% 50%}100%{background-position:0 0,200% 50%}}
+/* V8.2 player-facing cleanup: rarity hierarchy + collision-proof HUD + explicit resume */
+:root{--mythic-a:#ff4fc8;--mythic-b:#9b5cff;--legend-a:#ff6b9f;--legend-b:#ff9a67;--prism-a:#ff53d7;--prism-b:#8c63ff;--prism-c:#53e4ff}
+
+/* Every rarity owns a backplate. Only the top three tiers move. */
+.trait-card.r-B{--r1:#6d7182;--r2:#a7acbb;border-color:rgba(150,154,174,.32);background:radial-gradient(circle at 18% 0,rgba(160,168,190,.07),transparent 48%),linear-gradient(155deg,#171923,#0d0f16 68%,#11131b);box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.12)}
+.trait-card.r-A{--r1:#3c8eff;--r2:#63e3ff;border-color:rgba(72,164,255,.48);background:radial-gradient(circle at 15% 0,rgba(70,178,255,.15),transparent 48%),linear-gradient(150deg,#111a2d,#0b1220 66%,#0b1722);box-shadow:inset 0 1px 0 rgba(132,211,255,.06),0 10px 28px rgba(22,96,170,.10)}
+.trait-card.r-S{--r1:#7658ff;--r2:#c071ff;border-color:rgba(137,92,255,.52);background:radial-gradient(circle at 16% 0,rgba(140,92,255,.17),transparent 50%),linear-gradient(150deg,#1a1233,#100d21 66%,#14102a);box-shadow:inset 0 1px 0 rgba(200,160,255,.06),0 10px 28px rgba(97,48,176,.11)}
+.trait-card.r-SS{--r1:var(--legend-a);--r2:var(--legend-b);position:relative;border-color:rgba(255,112,150,.56);background:radial-gradient(circle at 16% -5%,rgba(255,102,154,.19),transparent 45%),radial-gradient(circle at 100% 100%,rgba(255,151,96,.11),transparent 52%),linear-gradient(150deg,#2a1225,#160f1c 64%,#1d1118);box-shadow:inset 0 1px 0 rgba(255,190,174,.07),0 0 22px rgba(255,90,132,.08),0 12px 30px rgba(0,0,0,.16);animation:legendaryBreath 8.6s ease-in-out infinite}
+.trait-card.r-SS::before{content:'✧';position:absolute;right:12px;top:9px;font-size:20px;color:#ffc0cc;text-shadow:0 0 10px rgba(255,100,139,.38);animation:legendarySpark 6.8s ease-in-out infinite}
+.trait-card.r-SS::after{content:'';position:absolute;inset:-30% -50%;pointer-events:none;background:linear-gradient(108deg,transparent 41%,rgba(255,199,178,.055) 49%,transparent 57%);transform:translateX(-55%);animation:legendarySweep 10s ease-in-out infinite}
+.trait-card.r-SS .trait-rarity{background:linear-gradient(90deg,#ff8fb5,#ffb17d);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:780}
+
+.trait-card.r-SSS{--r1:var(--mythic-a);--r2:var(--mythic-b);position:relative;border-color:rgba(215,91,255,.72);background:radial-gradient(circle at 18% -5%,rgba(255,75,200,.24),transparent 46%),radial-gradient(circle at 100% 100%,rgba(133,84,255,.16),transparent 52%),linear-gradient(145deg,#351237,#171126 65%,#20122c);box-shadow:0 0 0 1px rgba(239,90,255,.10) inset,0 0 28px rgba(164,61,205,.13),0 14px 34px rgba(0,0,0,.18);animation:mythicBreath 6.4s ease-in-out infinite}
+.trait-card.r-SSS::before{content:'◆';position:absolute;right:12px;top:9px;font-size:21px;color:#f5a8ff;text-shadow:0 0 14px rgba(231,93,255,.56);animation:mythicStar 4.6s ease-in-out infinite}
+.trait-card.r-SSS::after{content:'';position:absolute;inset:-25% -45%;pointer-events:none;background:linear-gradient(108deg,transparent 38%,rgba(255,189,247,.095) 49%,transparent 60%);transform:translateX(-65%);animation:mythicSweep 7.8s ease-in-out infinite}
+.trait-card.r-SSS .trait-rarity{background:linear-gradient(90deg,#ff86df,#b38cff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:820}
+
+.trait-card.r-P{--r1:var(--prism-a);--r2:var(--prism-b);position:relative;border-color:transparent;background:radial-gradient(circle at 20% -6%,rgba(255,89,211,.22),transparent 42%),radial-gradient(circle at 88% 104%,rgba(69,218,255,.18),transparent 45%),linear-gradient(#151128,#111020) padding-box,linear-gradient(120deg,#ff4ecb,#9c64ff,#4de3ff,#ff76b7) border-box;background-size:100% 100%,100% 100%,100% 100%,260% 260%;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 0 38px rgba(188,83,255,.24),0 16px 40px rgba(54,57,166,.15);animation:prismaticShift 4.6s linear infinite}
+.trait-card.r-P::before{content:'✦';position:absolute;right:12px;top:9px;font-size:22px;color:#fff;text-shadow:0 0 8px #ff6cdb,0 0 16px #7b83ff,0 0 24px #49ddff;animation:prismaticStar 2.2s ease-in-out infinite}
+.trait-card.r-P::after{content:'';position:absolute;inset:-18% -40%;border-radius:inherit;pointer-events:none;background:linear-gradient(105deg,transparent 31%,rgba(255,255,255,.21) 48%,transparent 66%);transform:translateX(-120%);animation:prismaticSweep 4.8s ease-in-out infinite}
+.trait-card.r-P .trait-rarity{background:linear-gradient(90deg,#ff78df,#bd8cff,#68e9ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900;letter-spacing:.09em}
+
+/* HUD pills inherit the same hierarchy, but stay much quieter than opening cards. */
+.trait.r-B{border-color:rgba(135,140,158,.34);background:linear-gradient(100deg,rgba(108,113,132,.13),rgba(82,87,104,.08))}
+.trait.r-A{border-color:rgba(67,151,255,.48);background:linear-gradient(100deg,rgba(47,126,224,.18),rgba(52,187,231,.10))}.trait.r-A i{color:#81d8ff}
+.trait.r-S{border-color:rgba(130,91,255,.50);background:linear-gradient(100deg,rgba(108,69,224,.20),rgba(174,92,236,.11))}.trait.r-S i{color:#c8a5ff}
+.trait.r-SS{border-color:rgba(255,105,149,.54);background:linear-gradient(100deg,rgba(184,56,99,.20),rgba(207,103,57,.12));box-shadow:0 0 13px rgba(255,91,129,.07);animation:legendaryPill 8.6s ease-in-out infinite}.trait.r-SS i{color:#ffb4c8}
+.trait.r-SSS{border-color:rgba(211,90,255,.60);background:linear-gradient(100deg,rgba(147,47,167,.25),rgba(86,57,166,.20));box-shadow:0 0 16px rgba(166,66,214,.11);animation:mythicPill 6.2s ease-in-out infinite}.trait.r-SSS i{color:#ec9dff}
+.trait.r-P{border-color:rgba(142,128,255,.70);background:linear-gradient(110deg,rgba(255,66,202,.22),rgba(117,80,255,.24),rgba(64,213,255,.19));background-size:220% 100%;box-shadow:0 0 20px rgba(152,93,255,.22);animation:prismaticPill 4.2s linear infinite}.trait.r-P i{background:linear-gradient(90deg,#ff81e1,#b994ff,#6be9ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:850}
+
+@keyframes legendaryBreath{0%,100%{box-shadow:inset 0 1px 0 rgba(255,190,174,.07),0 0 20px rgba(255,90,132,.07),0 12px 30px rgba(0,0,0,.16)}50%{box-shadow:inset 0 1px 0 rgba(255,190,174,.08),0 0 25px rgba(255,102,132,.12),0 12px 30px rgba(0,0,0,.16)}}
+@keyframes legendarySpark{0%,100%{opacity:.66;transform:scale(.96)}50%{opacity:.90;transform:scale(1.03)}}
+@keyframes legendarySweep{0%,68%{transform:translateX(-65%)}88%,100%{transform:translateX(65%)}}
+@keyframes mythicBreath{0%,100%{filter:saturate(1);box-shadow:0 0 0 1px rgba(239,90,255,.10) inset,0 0 26px rgba(164,61,205,.12),0 14px 34px rgba(0,0,0,.18)}50%{filter:saturate(1.08);box-shadow:0 0 0 1px rgba(239,90,255,.12) inset,0 0 34px rgba(197,69,225,.19),0 14px 34px rgba(0,0,0,.18)}}
+@keyframes mythicStar{0%,100%{transform:translateY(0) scale(1);opacity:.78}50%{transform:translateY(-1px) scale(1.08);opacity:1}}
+@keyframes mythicSweep{0%,60%{transform:translateX(-70%)}84%,100%{transform:translateX(70%)}}
+@keyframes prismaticShift{0%{background-position:0 0,0 0,0 0,0% 50%}100%{background-position:0 0,0 0,0 0,200% 50%}}
 @keyframes prismaticStar{50%{transform:scale(1.18) rotate(12deg);filter:brightness(1.35)}}
-@keyframes prismaticSweep{0%,58%{transform:translateX(-120%)}80%,100%{transform:translateX(120%)}}
+@keyframes prismaticSweep{0%,56%{transform:translateX(-120%)}80%,100%{transform:translateX(120%)}}
+@keyframes legendaryPill{0%,100%{box-shadow:0 0 11px rgba(255,91,129,.06)}50%{box-shadow:0 0 15px rgba(255,91,129,.11)}}
+@keyframes mythicPill{0%,100%{box-shadow:0 0 14px rgba(166,66,214,.09)}50%{box-shadow:0 0 19px rgba(183,73,227,.16)}}
+@keyframes prismaticPill{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
 /* Base style used a two-column mini-grid for age/money; narrow screens could place text on top of the avatar. */
 .hud .hero{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;column-gap:13px;min-width:0}
 .hud .hero>.avatar{grid-column:1;grid-row:1;width:58px;height:58px;min-width:58px;position:relative;z-index:1;margin:0}
@@ -23,5 +49,10 @@
 .hud .hero>div:nth-child(2)>strong{font-size:clamp(25px,2.4vw,31px);line-height:1.02}
 .hud .hero>div:nth-child(2)>span{font-size:12px;line-height:1.2}
 .hud .hero>div:nth-child(2)>b{font-size:15px;line-height:1.15}
-@media(max-width:700px){.hud{grid-template-columns:minmax(0,1fr);gap:10px}.hud .hero{grid-template-columns:52px minmax(0,1fr)}.hud .hero>.avatar{width:52px;height:52px;min-width:52px}.hud .hero>div:nth-child(2)>strong{font-size:25px}.toptraits{min-width:0;overflow-x:auto}.partner-mini{min-width:0}}
-@media(prefers-reduced-motion:reduce){.trait-card.r-P,.trait-card.r-P::before,.trait-card.r-P::after{animation:none!important}}
+
+/* A normal link opens the new-run screen. Existing progress is resumed only by reload or this explicit button. */
+.continue-save{grid-column:1/-1!important;min-height:48px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:10px 15px!important;border-color:rgba(102,216,255,.18)!important;background:linear-gradient(100deg,rgba(38,98,132,.12),rgba(91,65,151,.09))!important;text-align:left!important;box-shadow:none!important}
+.continue-save span{font-weight:780;color:#dff7ff}.continue-save small{font-size:9px;font-weight:500;color:#7f91a2;line-height:1.35;text-align:right}.continue-save:hover{border-color:rgba(102,216,255,.38)!important;background:linear-gradient(100deg,rgba(38,98,132,.18),rgba(91,65,151,.13))!important}
+
+@media(max-width:700px){.hud{grid-template-columns:minmax(0,1fr);gap:10px}.hud .hero{grid-template-columns:52px minmax(0,1fr)}.hud .hero>.avatar{width:52px;height:52px;min-width:52px}.hud .hero>div:nth-child(2)>strong{font-size:25px}.toptraits{min-width:0;overflow-x:auto}.partner-mini{min-width:0}.continue-save{flex-direction:column;align-items:flex-start!important}.continue-save small{text-align:left}}
+@media(prefers-reduced-motion:reduce){.trait-card.r-SS,.trait-card.r-SS::before,.trait-card.r-SS::after,.trait-card.r-SSS,.trait-card.r-SSS::before,.trait-card.r-SSS::after,.trait-card.r-P,.trait-card.r-P::before,.trait-card.r-P::after,.trait.r-SS,.trait.r-SSS,.trait.r-P{animation:none!important}}
