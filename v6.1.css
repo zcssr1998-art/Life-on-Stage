@@ -1,0 +1,68 @@
+/* V6.1 — fix six-row V6 game layout, black-box attributes, Lachesis singularity */
+
+/* V6 adds an extra world strip, so the old five-row grid creates a giant implicit row.
+   Keep all six real sections explicit. */
+.game-screen.v55-game:not(:has(.result-strip)){
+  display:grid!important;
+  grid-template-rows:auto var(--v57-stats-block,132px) auto minmax(64px,var(--v57-story-block,102px)) 22px minmax(132px,1fr)!important;
+  align-content:stretch!important;
+  gap:var(--v57-gap,4px)!important;
+  overflow:hidden!important;
+}
+.game-screen.v55-game>.v56-hudpack,.game-screen.v55-game>.v55-stats,.game-screen.v55-game>.v6-world,
+.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{min-height:0!important;margin:0!important}
+.v6-world{min-height:42px!important;max-height:66px!important;padding:5px 8px!important}
+.v6-world-head{margin-bottom:2px!important}.v6-world p{margin-bottom:3px!important}
+.v55-latest.empty{min-height:58px!important}.v55-latest.empty>p{align-self:center!important;margin:0!important}
+.v55-actions{min-height:132px!important}
+
+/* Exact attribute points are gone from the player-facing UI. */
+.v61-fog-stat{grid-template-rows:minmax(13px,1fr) 7px!important}
+.v61-fog-stat .v55-stat-head{grid-template-columns:minmax(0,1fr) minmax(64px,auto) 18px!important}
+.v61-fog-stat .v55-stat-head b{font-size:var(--v57-small,9px)!important;color:#d7e1f0!important;text-align:right!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.v61-fog-stat .v55-stat-head em{font-size:var(--v57-label,10px)!important}
+.v61-fogbar{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;height:7px}
+.v61-fogbar i{display:block;border-radius:999px;background:#1b2636;border:1px solid rgba(255,255,255,.025)}
+.v61-fogbar i.on{background:linear-gradient(90deg,#6076d9,#65b8ad,#c8b966);box-shadow:0 0 7px rgba(104,157,219,.12)}
+
+/* Singularity year should look like an actual rupture, not another rare event card. */
+.v61-singularity-year .v6-world{border-color:#58416d!important;background:linear-gradient(100deg,#151226,#0e1420)!important}
+.v61-singularity-head{border:1px solid rgba(207,151,255,.38);border-radius:9px;padding:5px 8px;background:linear-gradient(90deg,rgba(109,64,166,.16),rgba(219,170,93,.08))}
+.v61-singularity-head strong{color:#ead8ff!important;text-shadow:0 0 14px rgba(189,128,255,.24)}
+.v61-singularity-head span{color:#c9b4df!important}
+.v61-singularity-card{position:relative!important;border-color:#74558f!important;background:radial-gradient(circle at 90% 0,rgba(212,165,255,.13),transparent 42%),linear-gradient(145deg,#171426,#101722)!important;box-shadow:inset 0 0 25px rgba(138,89,177,.05)}
+.v61-singularity-card:before{content:'✦';position:absolute;right:8px;top:6px;color:#d8b4ff;font-size:12px;opacity:.7}
+.v61-singularity-card strong{color:#f0e2ff!important}.v61-singularity-card .action-top span{color:#c997ff!important}
+.v61-singularity-card:active{transform:scale(.985);border-color:#d4a6ff!important}
+.v61-aftershock-card{border-color:#4e456f!important;background:linear-gradient(145deg,#141526,#101722)!important}
+
+.v61-singularity-info{border-color:#4f4169!important;background:linear-gradient(145deg,#131324,#0d1520)!important}
+.v61-singularity-info.dormant{border-style:dashed!important;opacity:.86}.v61-singularity-info p{color:#c4c9d8!important;line-height:1.5}.v61-singularity-info small{color:#8e82aa!important}
+
+.v61-end-singularity{position:relative;margin:12px 0;border:1px solid #72528b;border-radius:15px;padding:13px 14px 14px;background:radial-gradient(circle at 92% 5%,rgba(221,173,255,.13),transparent 34%),linear-gradient(145deg,#171426,#0c131e);overflow:hidden}
+.v61-singularity-symbol{position:absolute;right:12px;top:-8px;font-size:64px;color:rgba(221,180,255,.08);line-height:1}.v61-end-singularity h2{position:relative;margin:9px 0 6px;font-size:16px;color:#eee4ff}.v61-end-singularity p{position:relative;margin:0 0 10px;font-size:11px;line-height:1.65;color:#bcc7d8}.v61-end-singularity p b{color:#e8c8ff}.v61-end-singularity button{position:relative;width:100%;border:1px solid #8965a7;border-radius:10px;padding:10px;background:linear-gradient(90deg,#35204e,#202a48);color:#f3e8ff;font-weight:850;font-size:12px}.v61-end-singularity small{position:relative;display:block;margin-top:6px;color:#837b94;font-size:9px}
+
+/* Tablet/desktop: make content denser, not emptier. */
+@media(min-width:700px){
+  .game-screen.v55-game:not(:has(.result-strip)){
+    grid-template-rows:auto var(--v57-stats-block,182px) auto minmax(92px,var(--v57-story-block,146px)) 28px minmax(190px,1fr)!important;
+  }
+  .v6-world{max-height:74px!important}.v55-actions{min-height:190px!important}
+  .v61-fog-stat .v55-stat-head b{font-size:12px!important}.v61-end-singularity h2{font-size:20px}.v61-end-singularity p{font-size:13px}.v61-end-singularity button{font-size:14px}
+}
+
+/* Short embedded iOS browsers: preserve one-screen play. */
+@media(max-height:719px){
+  .game-screen.v55-game:not(:has(.result-strip)){
+    grid-template-rows:auto 108px 39px 62px 18px minmax(108px,1fr)!important;
+    gap:3px!important;
+  }
+  .v6-world{height:39px!important;min-height:39px!important;padding:3px 6px!important}.v6-world p{display:none!important}.v6-world-head{margin:0!important}.v6-world-pills{margin-top:2px}.v6-world-pills i:nth-child(n+5){display:none!important}
+  .v55-latest{min-height:62px!important;padding:3px 5px!important}.v55-story p{-webkit-line-clamp:2!important}
+  .v55-actions{min-height:108px!important}
+}
+
+@media(max-width:390px){
+  .v61-fog-stat .v55-stat-head{grid-template-columns:minmax(0,1fr) minmax(54px,auto) 14px!important}.v61-fog-stat .v55-stat-head b{font-size:7.2px!important}.v61-fogbar{gap:2px;height:6px}
+  .v61-end-singularity h2{font-size:14px}.v61-end-singularity p{font-size:10px}.v61-end-singularity button{font-size:11px}
+}
