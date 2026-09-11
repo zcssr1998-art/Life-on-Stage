@@ -6,7 +6,7 @@ const stage=(age:number)=>age<=12?'childhood':age<=22?'youth':age<=59?'adult':'s
 export class BrowserContentProvider implements ContentProvider{
   private b?:BaseContent;private cache=new Map<string,LegacyEvent[]>();
   async base(){if(!this.b)this.b=await fetch(new URL('../generated/base.json',import.meta.url)).then(r=>r.json());return this.b!;}
-  async events(age:number){const s=stage(age);if(!this.cache.has(s))this.cache.set(s,await fetch(new URL(`../generated/events-${s}.json`,import.meta.url)).then(r=>r.json());return this.cache.get(s)!;}
+  async events(age:number){const s=stage(age);if(!this.cache.has(s))this.cache.set(s,await fetch(new URL(`../generated/events-${s}.json`,import.meta.url)).then(r=>r.json()));return this.cache.get(s)!;}
 }
 
 export const requirement=(r:any={}):Requirement=>({
