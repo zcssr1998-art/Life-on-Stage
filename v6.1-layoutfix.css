@@ -1,0 +1,33 @@
+/* V6.1.1 — final outer-shell fix.
+   Older V5 selectors use :not(:has(...)), which gives them higher specificity than the first V6.1 flex rule.
+   #root makes this rule authoritative in both pre-result and post-result states. */
+#root .game-screen.v55-game{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  grid-template-rows:none!important;
+  gap:var(--v57-gap,4px)!important;
+  overflow:hidden!important;
+}
+#root .game-screen.v55-game>.v56-hudpack{flex:0 0 auto!important;min-height:0!important;margin:0!important}
+#root .game-screen.v55-game>.v55-stats{flex:0 0 var(--v57-stats-block,132px)!important;height:var(--v57-stats-block,132px)!important;min-height:0!important;max-height:none!important;margin:0!important}
+#root .game-screen.v55-game>.v6-world{flex:0 0 auto!important;min-height:42px!important;max-height:66px!important;margin:0!important}
+#root .game-screen.v55-game>.v55-latest{flex:0 0 var(--v57-story-block,102px)!important;height:var(--v57-story-block,102px)!important;min-height:0!important;max-height:none!important;margin:0!important}
+#root .game-screen.v55-game>.choice-head{flex:0 0 22px!important;height:22px!important;min-height:22px!important;max-height:22px!important;margin:0!important}
+#root .game-screen.v55-game>.v55-actions{flex:1 1 0!important;height:auto!important;min-height:120px!important;max-height:none!important;margin:0!important}
+
+@media(min-width:700px){
+  #root .game-screen.v55-game>.v55-stats{flex-basis:var(--v57-stats-block,182px)!important;height:var(--v57-stats-block,182px)!important}
+  #root .game-screen.v55-game>.v55-latest{flex-basis:var(--v57-story-block,146px)!important;height:var(--v57-story-block,146px)!important}
+  #root .game-screen.v55-game>.choice-head{flex-basis:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important}
+  #root .game-screen.v55-game>.v55-actions{min-height:160px!important}
+}
+@media(max-height:719px){
+  #root .game-screen.v55-game{gap:3px!important}
+  #root .game-screen.v55-game>.v55-stats{flex-basis:108px!important;height:108px!important}
+  #root .game-screen.v55-game>.v6-world{flex-basis:39px!important;height:39px!important;min-height:39px!important;max-height:39px!important}
+  #root .game-screen.v55-game>.v55-latest{flex-basis:62px!important;height:62px!important;min-height:62px!important}
+  #root .game-screen.v55-game>.choice-head{flex-basis:18px!important;height:18px!important;min-height:18px!important;max-height:18px!important}
+  #root .game-screen.v55-game>.v55-actions{min-height:108px!important}
+}
