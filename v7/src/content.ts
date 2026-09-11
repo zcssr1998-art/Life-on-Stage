@@ -2,7 +2,7 @@ import type {ActionChoice,ActionResponse,BaseContent,EffectOp,GameState,LegacyEv
 import {RNG} from './core.js';
 
 export interface ContentProvider{base():Promise<BaseContent>;events(age:number):Promise<LegacyEvent[]>;}
-const stage=(age:number)=>age<=12?'childhood':age<=22?'youth':age<=59?'adult':'senior';
+const stage=(age:number)=>age<=3?'toddler':age<=6?'preschool':age<=9?'primary':age<=12?'preteen':age<=15?'teenEarly':age<=18?'teenLate':age<=22?'college':age<=29?'twenties':age<=39?'thirties':age<=49?'forties':age<=59?'fifties':age<=69?'sixties':age<=84?'elder':'oldest';
 export class BrowserContentProvider implements ContentProvider{
   private b?:BaseContent;private cache=new Map<string,LegacyEvent[]>();
   async base(){if(!this.b)this.b=await fetch(new URL('../generated/base.json',import.meta.url)).then(r=>r.json());return this.b!;}
@@ -45,9 +45,17 @@ const optionOutcomes=(o:LegacyOption):Outcome[]=>{
   return[{weight:1,text:o.text??o.label,tone:undefined,ops:[...effectsOps(o.effects),...(o.addTags??[]).map(tag=>({type:'tag',tag} as EffectOp)),...specialOps(o.special)]}];
 };
 const optionResponse=(o:LegacyOption):ActionResponse=>({label:o.label,desc:o.text,hint:o.hint,requires:requirement(o.requires),outcomes:optionOutcomes(o)});
+export const inferEventTheme=(e:LegacyEvent)=>{
+  if(e.theme)return e.theme;const x=`${e.category} ${e.title} ${e.desc}`;
+  if(/考试|学校|学习|作业|课程|专业|大学|老师/.test(x))return'学业';if(/父母|家庭|孩子|子女|伴侣|家人|亲子/.test(x))return'家庭';
+  if(/恋爱|婚姻|约会|分手|感情/.test(x))return'关系';if(/工作|职业|升职|公司|老板|同事|裁员|创业/.test(x))return'事业';
+  if(/健康|医院|体检|疾病|运动|睡眠|医生/.test(x))return'健康';if(/投资|财富|钱|房|资产|债|基金|股票/.test(x))return'财务';
+  if(/朋友|社交|聚会|圈子|同学/.test(x))return'社交';if(/迁移|旅行|城市|出国|搬家/.test(x))return'迁移';if(/AI|技术|代码|工程|研究|科技/.test(x))return'技术';
+  if(/创作|作品|艺术|音乐|内容|写作|设计/.test(x))return'创作';return e.category||'生活';
+};
 export const eventToChoice=(e:LegacyEvent,s:Readonly<GameState>,_rng:RNG):ActionChoice|null=>{
   const responses=(e.options??[]).map(optionResponse);if(!responses.length||!responses.some(r=>passes(s,r.requires)))return null;
   return{id:e.id,sourceEvent:e.id,category:e.category,title:e.title,desc:e.desc||'这一年发生了一件需要你回应的事。',
     hint:e.hidden?'隐藏事件：某些构筑才会让它浮出水面。':'先选择事件，再决定你怎么回应。',rare:!!e.hidden,requires:requirement(e.requires),outcomes:[],responses,
-    meta:{repeatable:e.repeatable,cooldown:e.cooldown,weight:e.weight??1}};
+    meta:{repeatable:e.repeatable,cooldown:e.cooldown,weight:e.weight??1,theme:inferEventTheme(e),stageTag:e.stageTag,minAge:e.minAge,maxAge:e.maxAge}};
 };
