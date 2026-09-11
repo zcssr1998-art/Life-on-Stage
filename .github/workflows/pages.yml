@@ -25,6 +25,8 @@ jobs:
         uses: actions/checkout@v6
       - name: Long-run game smoke test
         run: node tests/v5-smoke.js
+      - name: Wealth ledger regression test
+        run: node tests/v5.6-money-smoke.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
