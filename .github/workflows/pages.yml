@@ -21,10 +21,19 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
-      - name: Install V7 build dependency
-        run: npm install --no-audit --no-fund
+      - name: Install V7 build and browser-test dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
       - name: V7 typecheck, content migration and simulation regression
         run: npm run test:v7
+      - name: Start local site for browser regression
+        run: |
+          python3 -m http.server 4173 >/tmp/life-stage-http.log 2>&1 &
+          echo $! > /tmp/life-stage-http.pid
+      - name: V7 desktop/mobile refresh-resume browser regression
+        run: npx playwright test tests/v7-webkit.spec.js --project=webkit
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
