@@ -31,6 +31,8 @@ jobs:
         run: node tests/v6-fate-smoke.js
       - name: V6.1 singularity regression test
         run: node tests/v6.1-fate-smoke.js
+      - name: V6.2 career and spouse regression test
+        run: node tests/v6.2-career-smoke.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
