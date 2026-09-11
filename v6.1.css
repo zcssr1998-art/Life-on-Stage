@@ -6,15 +6,18 @@
   display:grid!important;
   grid-template-rows:auto var(--v57-stats-block,132px) auto minmax(64px,var(--v57-story-block,102px)) 22px minmax(132px,1fr)!important;
   align-content:stretch!important;
+  align-items:stretch!important;
   gap:var(--v57-gap,4px)!important;
   overflow:hidden!important;
 }
 .game-screen.v55-game>.v56-hudpack,.game-screen.v55-game>.v55-stats,.game-screen.v55-game>.v6-world,
-.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{min-height:0!important;margin:0!important}
+.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{min-height:0!important;margin:0!important;align-self:stretch!important}
+/* Several older V5 rules give these blocks an intrinsic content height. In a fixed grid row WebKit then leaves the unused track as a visible blank band. */
+.game-screen.v55-game>.v55-stats,.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{height:100%!important;max-height:none!important}
 .v6-world{min-height:42px!important;max-height:66px!important;padding:5px 8px!important}
 .v6-world-head{margin-bottom:2px!important}.v6-world p{margin-bottom:3px!important}
 .v55-latest.empty{min-height:58px!important}.v55-latest.empty>p{align-self:center!important;margin:0!important}
-.v55-actions{min-height:132px!important}
+.v55-actions{min-height:132px!important;align-content:stretch!important}
 
 /* Exact attribute points are gone from the player-facing UI. */
 .v61-fog-stat{grid-template-rows:minmax(13px,1fr) 7px!important}
@@ -57,9 +60,10 @@
     grid-template-rows:auto 108px 39px 62px 18px minmax(108px,1fr)!important;
     gap:3px!important;
   }
+  .game-screen.v55-game>.v55-stats{height:108px!important;overflow:hidden!important}
   .v6-world{height:39px!important;min-height:39px!important;padding:3px 6px!important}.v6-world p{display:none!important}.v6-world-head{margin:0!important}.v6-world-pills{margin-top:2px}.v6-world-pills i:nth-child(n+5){display:none!important}
-  .v55-latest{min-height:62px!important;padding:3px 5px!important}.v55-story p{-webkit-line-clamp:2!important}
-  .v55-actions{min-height:108px!important}
+  .v55-latest{height:62px!important;min-height:62px!important;padding:3px 5px!important}.v55-story p{-webkit-line-clamp:2!important}
+  .choice-head{height:18px!important;min-height:18px!important}.v55-actions{min-height:108px!important}
 }
 
 @media(max-width:390px){
