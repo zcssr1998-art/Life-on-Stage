@@ -1,0 +1,45 @@
+/* V8.1 QA layer: hierarchy, rarity semantics, and layout hardening. */
+:root{--mythic:#ff4fa3;--mythic-warm:#ffd27a;--mythic-deep:#6f285d}
+
+/* SSS is Mythic, not Prismatic. Prismatic remains reserved for rolled event results. */
+.trait-card.r-SSS{
+  --r1:var(--mythic);--r2:var(--mythic-warm);
+  background:radial-gradient(circle at 85% 10%,rgba(255,210,122,.13),transparent 32%),radial-gradient(circle at 20% 110%,rgba(255,79,163,.16),transparent 46%),linear-gradient(#17101c,#100d18) padding-box,linear-gradient(135deg,#ff4fa3,#9c4f98 48%,#ffd27a) border-box!important;
+  box-shadow:0 0 24px rgba(255,79,163,.10),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  animation:mythicPulse 3.4s ease-in-out infinite!important;
+}
+.trait-card.r-SSS::before{content:"✦"!important;color:#ffd27a!important;text-shadow:0 0 16px rgba(255,123,183,.8)!important}
+.trait-card.r-SSS::after{background:linear-gradient(110deg,transparent 36%,rgba(255,211,130,.12) 49%,transparent 62%)!important}
+.trait.r-SSS{border-color:rgba(255,115,174,.55)!important;background:linear-gradient(100deg,rgba(255,79,163,.16),rgba(111,40,93,.16),rgba(255,210,122,.08))!important;box-shadow:0 0 12px rgba(255,79,163,.09)!important}
+/* There should be no P trait tier. If a stale DOM ever contains one, visually demote it instead of pretending Mythic=Prismatic. */
+.trait-card.r-P,.trait.r-P{--r1:#737584;--r2:#a6a7b2!important;animation:none!important}
+
+/* HUD: age/job/money have an explicit flow and can never sit on the avatar. */
+.hud{grid-template-columns:minmax(235px,1fr) minmax(0,1.35fr) auto!important;gap:14px!important}
+.hud .hero{min-width:0;overflow:hidden;isolation:isolate}
+.hud .hero .avatar{position:relative;z-index:2;flex:0 0 58px;margin:0!important}
+.hud .hero>div:nth-child(2){min-width:0;flex:1 1 auto;display:flex!important;flex-flow:row wrap!important;align-items:baseline!important;align-content:center!important;column-gap:9px!important;row-gap:4px!important;padding:1px 0!important}
+.hud .hero>div:nth-child(2)>strong{position:static!important;display:block!important;flex:0 0 auto!important;margin:0!important;transform:none!important;line-height:1!important;white-space:nowrap}
+.hud .hero>div:nth-child(2)>span{position:static!important;display:block!important;flex:1 1 100px!important;min-width:0!important;margin:0!important;transform:none!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hud .hero>div:nth-child(2)>b{position:static!important;display:block!important;flex:0 0 100%!important;margin:0!important;transform:none!important;line-height:1.15!important;white-space:nowrap}
+.hud .toptraits{min-width:0;max-width:100%;justify-content:flex-end}
+
+/* Keep every ordinary hidden-stat tile deliberately neutral and uniform. */
+.state-grid .state{--stat:#8b8d9c!important;border-color:rgba(190,192,210,.12)!important;background:linear-gradient(180deg,rgba(20,20,31,.88),rgba(12,12,21,.92))!important}
+.state-grid .state span,.state-grid .state b,.state-grid .state small{text-shadow:none!important}
+
+@media(max-width:1050px){
+  .hud{grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important}
+  .hud .toptraits{grid-column:1/-1;grid-row:2;justify-content:flex-start!important;max-height:64px}
+  .hud .partner-mini{grid-column:2;grid-row:1;min-width:190px}
+}
+@media(max-width:700px){
+  .hud{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;padding:11px 12px!important}
+  .hud .hero{width:100%;overflow:visible}
+  .hud .hero .avatar{flex-basis:52px;width:52px;height:52px;font-size:28px}
+  .hud .hero>div:nth-child(2)>strong{font-size:27px!important}
+  .hud .hero>div:nth-child(2)>span{font-size:10px!important}
+  .hud .hero>div:nth-child(2)>b{font-size:14px!important}
+  .hud .toptraits{width:100%;justify-content:flex-start!important;max-height:58px}
+  .hud .partner-mini{border-left:0!important;border-top:1px solid rgba(157,147,223,.11);padding:9px 0 0!important;min-width:0;width:100%}
+}
