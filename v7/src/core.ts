@@ -1,4 +1,4 @@
-import type {GameState,StatKey,YearLedger,HistoryEntry,ActionChoice} from './types.js';
+import type {ActionChoice,GameState,HistoryEntry,MetaProgress,StatKey,SynergyRef,TraitRef} from './types.js';
 
 export class RNG{
   private s:number;
@@ -33,10 +33,16 @@ export type Command=
  |{type:'UI_VIEW';view:GameState['ui']['view']}
  |{type:'UI_BUSY';value:boolean}
  |{type:'UI_MESSAGE';value:string}
+ |{type:'UI_FAST';value:boolean}
  |{type:'RESET_YEAR';opening:number}
  |{type:'SEEN';id:string;age:number}
  |{type:'FATE_PATCH';patch:Partial<GameState['fate']>}
- |{type:'FINALIZE_LEDGER'};
+ |{type:'FINALIZE_LEDGER'}
+ |{type:'TRAIT_ADD';trait:TraitRef}
+ |{type:'TRAIT_EVOLVE';id:string;name:string;text?:string}
+ |{type:'SYNERGIES';value:SynergyRef[]}
+ |{type:'ROUTES';value:string[]}
+ |{type:'RUN_FLAGS';patch:Partial<GameState['runFlags']>};
 
 const statCap=(v:number)=>Math.max(0,Math.min(200,Math.round(v)));
 export class Store{
@@ -65,31 +71,47 @@ export class Store{
     case'CHILD_ADD':s.children.push({id:`ch_${s.seed}_${s.age}_${s.children.length}`,name:c.name,birthAge:s.age,alive:true});break;
     case'EDUCATION':s.education=c.value;break;
     case'WORLD':Object.assign(s.world,c.patch);break;
-    case'HISTORY':s.history.unshift(c.entry);s.history=s.history.slice(0,1200);s.yearStories.unshift(c.entry);s.yearStories=s.yearStories.slice(0,3);c.entry.tone==='good'?s.positive++:c.entry.tone==='bad'?s.negative++:s.neutral++;if(c.entry.kind==='rare')s.rareEvents++;break;
+    case'HISTORY':s.history.unshift(c.entry);s.history=s.history.slice(0,1200);s.yearStories.unshift(c.entry);s.yearStories=s.yearStories.slice(0,3);c.entry.tone==='good'?s.positive++:c.entry.tone==='bad'?s.negative++:s.neutral++;if(c.entry.kind==='rare'||c.entry.rarity==='prismatic')s.rareEvents++;break;
     case'SET_CHOICES':s.currentChoices=c.choices;break;
     case'ADVANCE_AGE':s.age++;s.yearStories=[];break;
     case'DIE':s.alive=false;s.deathReason=c.reason;s.ui.view='end';break;
     case'UI_VIEW':s.ui.view=c.view;break;
     case'UI_BUSY':s.ui.busy=c.value;break;
     case'UI_MESSAGE':s.ui.message=c.value;break;
+    case'UI_FAST':s.ui.fast=c.value;break;
     case'RESET_YEAR':s.ledger={age:s.age,opening:c.opening,closing:c.opening,net:0,items:[]};s.yearStories=[];break;
     case'SEEN':s.seen[c.id]=c.age;break;
     case'FATE_PATCH':Object.assign(s.fate,c.patch);break;
     case'FINALIZE_LEDGER':if(s.ledger){s.ledger.closing=s.wealth;s.ledger.net=s.ledger.closing-s.ledger.opening;s.financeHistory.unshift(structuredClone(s.ledger));s.financeHistory=s.financeHistory.slice(0,140);}break;
+    case'TRAIT_ADD':if(!s.traits.some(x=>x.id===c.trait.id))s.traits.push(structuredClone(c.trait));break;
+    case'TRAIT_EVOLVE':{const t=s.traits.find(x=>x.id===c.id);if(t){t.level=2;t.evolvedName=c.name;t.evolutionText=c.text;}break;}
+    case'SYNERGIES':s.synergies=structuredClone(c.value);break;
+    case'ROUTES':s.routesUnlocked=[...new Set(c.value)];break;
+    case'RUN_FLAGS':Object.assign(s.runFlags,c.patch);break;
   }}
-  private assert(){const s=this.state;if(!Number.isFinite(s.wealth))throw new Error('wealth is not finite');for(const[k,v]of Object.entries(s.stats))if(!Number.isFinite(v)||v<0||v>200)throw new Error(`bad stat ${k}:${v}`);if(s.partnerId&&!s.relationships.some(x=>x.id===s.partnerId&&x.alive))throw new Error('partnerId points to unavailable relationship');if(s.ledger){const sum=s.ledger.items.reduce((a,b)=>a+b.amount,0);const delta=s.wealth-s.ledger.opening;if(Math.abs(sum-delta)>1)throw new Error(`money audit mismatch ${sum} != ${delta}`);}}
+  private assert(){const s=this.state;if(!Number.isFinite(s.wealth))throw new Error('wealth is not finite');if(!Number.isFinite(s.familyResources))throw new Error('familyResources is not finite');for(const[k,v]of Object.entries(s.stats))if(!Number.isFinite(v)||v<0||v>200)throw new Error(`bad stat ${k}:${v}`);if(s.partnerId&&!s.relationships.some(x=>x.id===s.partnerId&&x.alive))throw new Error('partnerId points to unavailable relationship');if(s.ledger){const sum=s.ledger.items.reduce((a,b)=>a+b.amount,0);const delta=s.wealth-s.ledger.opening;if(Math.abs(sum-delta)>1)throw new Error(`money audit mismatch ${sum} != ${delta}`);}}
 }
 
-export interface Persistence{save(state:GameState):Promise<void>;load():Promise<GameState|null>;putSnapshot(key:string,state:GameState):Promise<void>;getSnapshot(key:string):Promise<GameState|null>;}
-export class MemoryPersistence implements Persistence{private saveState:GameState|null=null;private snaps=new Map<string,GameState>();async save(s:GameState){this.saveState=structuredClone(s)}async load(){return this.saveState?structuredClone(this.saveState):null}async putSnapshot(k:string,s:GameState){this.snaps.set(k,structuredClone(s))}async getSnapshot(k:string){const s=this.snaps.get(k);return s?structuredClone(s):null}}
+export interface Persistence{
+  save(state:GameState):Promise<void>;load():Promise<GameState|null>;putSnapshot(key:string,state:GameState):Promise<void>;getSnapshot(key:string):Promise<GameState|null>;
+  saveMeta?(meta:MetaProgress):Promise<void>;loadMeta?():Promise<MetaProgress|null>;
+}
+export class MemoryPersistence implements Persistence{
+  private saveState:GameState|null=null;private snaps=new Map<string,GameState>();private meta:MetaProgress|null=null;
+  async save(s:GameState){this.saveState=structuredClone(s)}async load(){return this.saveState?structuredClone(this.saveState):null}
+  async putSnapshot(k:string,s:GameState){this.snaps.set(k,structuredClone(s))}async getSnapshot(k:string){const s=this.snaps.get(k);return s?structuredClone(s):null}
+  async saveMeta(m:MetaProgress){this.meta=structuredClone(m)}async loadMeta(){return this.meta?structuredClone(this.meta):null}
+}
 export class BrowserPersistence implements Persistence{
   private fallback=new MemoryPersistence();private dbp:Promise<IDBDatabase|null>;
   constructor(){this.dbp=this.open();}
   private open(){if(typeof indexedDB==='undefined')return Promise.resolve(null);return new Promise<IDBDatabase|null>(res=>{const q=indexedDB.open('life-on-stage-v7',1);q.onupgradeneeded=()=>{const db=q.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv')};q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);});}
-  private async put(k:string,v:unknown){const db=await this.dbp;if(!db){return false}return new Promise<boolean>(res=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);});}
+  private async put(k:string,v:unknown){const db=await this.dbp;if(!db)return false;return new Promise<boolean>(res=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);});}
   private async get<T>(k:string){const db=await this.dbp;if(!db)return null;return new Promise<T|null>(res=>{const tx=db.transaction('kv','readonly'),q=tx.objectStore('kv').get(k);q.onsuccess=()=>res((q.result??null)as T|null);q.onerror=()=>res(null);});}
   async save(s:GameState){if(!(await this.put('save',s)))await this.fallback.save(s)}
   async load(){return await this.get<GameState>('save')??await this.fallback.load()}
   async putSnapshot(k:string,s:GameState){if(!(await this.put(`snap:${k}`,s)))await this.fallback.putSnapshot(k,s)}
   async getSnapshot(k:string){return await this.get<GameState>(`snap:${k}`)??await this.fallback.getSnapshot(k)}
+  async saveMeta(m:MetaProgress){if(!(await this.put('meta:v8',m)))await this.fallback.saveMeta?.(m)}
+  async loadMeta(){return await this.get<MetaProgress>('meta:v8')??await this.fallback.loadMeta?.()??null}
 }

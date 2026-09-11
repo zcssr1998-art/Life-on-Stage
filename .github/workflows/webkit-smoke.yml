@@ -1,4 +1,4 @@
-name: V7 Browser Regression
+name: V8 Browser Regression
 on:
   pull_request:
     branches: [main]
@@ -20,11 +20,11 @@ jobs:
           npm install --no-audit --no-fund
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps webkit
-      - name: Build V7
-        run: npm run build:v7
+      - name: V8 typecheck, content migration and 120-run simulation
+        run: npm run test:v7
       - name: Start local site
         run: |
           python3 -m http.server 4173 >/tmp/life-stage-http.log 2>&1 &
           echo $! > /tmp/life-stage-http.pid
-      - name: Run V7 desktop/mobile refresh-resume regression
+      - name: Run V8 desktop/mobile/save/build regression
         run: npx playwright test tests/v7-webkit.spec.js --project=webkit

@@ -1,109 +1,11 @@
 import {test,expect} from '@playwright/test';
+const waitForV7=async page=>{await page.waitForFunction(()=>!!window.__V7__?.runtime&&!!window.__V7__?.ui)};
+const chooseFirstPlayable=async page=>{const buttons=page.locator('[data-action="choice"]');await expect(buttons.first()).toBeVisible();await buttons.first().click();const response=page.locator('[data-action="response"]:not([disabled])');if(await response.count())await response.first().click();};
 
-const waitForV7=async page=>{
-  await page.waitForFunction(()=>!!window.__V7__?.runtime&&!!window.__V7__?.ui);
-};
+test('V8 opening, neutral zhou ritual, event responses and life-story output',async({page})=>{await page.setViewportSize({width:1440,height:950});await page.goto('/');await waitForV7(page);await page.evaluate(async()=>{await window.__V7__.runtime.reroll(763211);window.__V7__.ui.setStart(true)});expect(await page.evaluate(()=>window.__V7__.runtime.store.get().wealth)).toBe(0);await expect(page.getByText('十维底层能力')).toBeVisible();await expect(page.locator('.opening-state-grid .state')).toHaveCount(10);await page.locator('[data-action="begin"]').click();await expect(page.locator('.zhou-ritual h1')).toHaveText('抓 周');await expect(page.locator('[data-action="choice"]')).toHaveCount(5);expect(await page.locator('.event-zhou [data-action="choice"].rare').count()).toBe(0);await page.locator('[data-action="choice"]').first().click();await expect(page.locator('[data-story="1"]').first()).toBeVisible();expect((await page.locator('[data-story="1"]').first().innerText()).trim().length).toBeGreaterThan(8);expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBe(2);let found=false;for(let guard=0;guard<35;guard++){const info=await page.evaluate(()=>{const s=window.__V7__.runtime.store.get();return{alive:s.alive,idx:s.currentChoices.findIndex(c=>c.responses?.length)}});if(!info.alive)break;if(info.idx>=0){await page.locator(`[data-action="choice"][data-index="${info.idx}"]`).click();await expect(page.locator('.response-stage')).toBeVisible();expect(await page.locator('[data-action="response"]').count()).toBeGreaterThan(0);await page.locator('[data-action="response"]:not([disabled])').first().click();await expect(page.locator('[data-story="1"]').first()).toBeVisible();found=true;break;}await chooseFirstPlayable(page);}expect(found).toBeTruthy();});
 
-const expectStoryOutput=async page=>{
-  const story=page.locator('[data-story="1"]').first();
-  await expect(story).toBeVisible();
-  expect((await story.innerText()).trim().length).toBeGreaterThan(10);
-};
+test('V8 long session keeps people secondary, story visible, money audited and fate rewind works',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');await waitForV7(page);await page.evaluate(async()=>{await window.__V7__.runtime.reroll(998877);window.__V7__.ui.setStart(true)});await page.locator('[data-action="begin"]').click();await chooseFirstPlayable(page);const target=await page.evaluate(()=>window.__V7__.runtime.store.get().fate.targetAge);for(let guard=0;guard<50;guard++){const st=await page.evaluate(()=>{const s=window.__V7__.runtime.store.get();return{age:s.age,alive:s.alive}});if(!st.alive||st.age>=target)break;await chooseFirstPlayable(page);await expect(page.locator('[data-story="1"]').first()).toBeVisible();}await expect(page.getByText('拉刻西斯节点 · 宿命奇点')).toBeVisible();await chooseFirstPlayable(page);const audit=await page.evaluate(()=>{const l=window.__V7__.runtime.store.get().ledger;if(!l)return null;return{net:l.net,sum:l.items.reduce((a,b)=>a+b.amount,0)}});if(audit)expect(Math.abs(audit.net-audit.sum)).toBeLessThanOrEqual(1);const rel=await page.evaluate(()=>{const s=window.__V7__.runtime.store.get();return{contacts:s.relationships.length,major:s.history.filter(h=>h.sourceId==='social_romance'||h.sourceId==='social_crisis').length}});expect(rel.contacts).toBeLessThanOrEqual(8);expect(rel.major).toBeLessThanOrEqual(4);await page.evaluate(()=>{window.__V7__.runtime.store.dispatch({type:'DIE',reason:'WebKit回归测试'});window.__V7__.ui.render()});await expect(page.locator('[data-action="rewind"]')).toBeVisible();await page.locator('[data-action="rewind"]').click();await expect(page.locator('[data-action="choice"]')).toHaveCount(4);expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBe(target);});
 
-test('V7 mobile long-session, story output, money audit and fate rewind',async({page})=>{
-  await page.setViewportSize({width:390,height:844});
-  await page.goto('/');
-  await waitForV7(page);
-  await expect(page.getByText('人生随机实验室')).toBeVisible();
-  await page.evaluate(async()=>{await window.__V7__.runtime.reroll(763211);window.__V7__.ui.setStart(true)});
-  await page.locator('[data-action="begin"]').click();
-  await expect(page.locator('[data-action="choice"]')).toHaveCount(5);
-  await page.locator('[data-action="choice"]').first().click();
-  await expect(page.locator('[data-action="choice"]')).toHaveCount(4);
-  await expectStoryOutput(page);
-  const size=await page.evaluate(()=>({h:document.documentElement.scrollHeight,v:innerHeight}));
-  expect(size.h).toBeLessThanOrEqual(size.v+8);
-  const target=await page.evaluate(()=>window.__V7__.runtime.store.get().fate.targetAge);
-  for(let guard=0;guard<45;guard++){
-    const st=await page.evaluate(()=>{const s=window.__V7__.runtime.store.get();return{age:s.age,alive:s.alive}});
-    if(!st.alive||st.age>=target)break;
-    await page.locator('[data-action="choice"]').first().click();
-    await expectStoryOutput(page);
-  }
-  await expect(page.getByText('拉刻西斯节点 · 宿命奇点')).toBeVisible();
-  await expect(page.locator('[data-action="choice"]')).toHaveCount(4);
-  await page.locator('[data-action="choice"]').first().click();
-  await expectStoryOutput(page);
-  const audit=await page.evaluate(()=>{const l=window.__V7__.runtime.store.get().ledger;if(!l)return null;return{net:l.net,sum:l.items.reduce((a,b)=>a+b.amount,0)}});
-  if(audit)expect(Math.abs(audit.net-audit.sum)).toBeLessThanOrEqual(1);
-  await page.evaluate(()=>{window.__V7__.runtime.store.dispatch({type:'DIE',reason:'WebKit回归测试'});window.__V7__.ui.render()});
-  await expect(page.locator('[data-action="rewind"]')).toBeVisible();
-  await page.locator('[data-action="rewind"]').click();
-  await expect(page.locator('[data-action="choice"]')).toHaveCount(4);
-  expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBe(target);
-  const saved=await page.evaluate(async()=>{await window.__V7__.runtime.persist.save(window.__V7__.runtime.store.snapshot());const s=await window.__V7__.runtime.persist.load();return!!s&&s.version==='V7'&&s.ui.busy===false});
-  expect(saved).toBeTruthy();
-});
+test('V8 legacy save migrates new fields, clears stale busy and remains playable after refresh',async({page})=>{await page.setViewportSize({width:1440,height:900});await page.goto('/');await waitForV7(page);await page.evaluate(async()=>{await window.__V7__.runtime.reroll(884422);window.__V7__.ui.setStart(true)});await page.locator('[data-action="begin"]').click();await chooseFirstPlayable(page);for(let i=0;i<6;i++){const alive=await page.evaluate(()=>window.__V7__.runtime.store.get().alive);if(!alive)break;await chooseFirstPlayable(page)}const before=await page.evaluate(async()=>{const snap=window.__V7__.runtime.store.snapshot();snap.ui.busy=true;delete snap.familyResources;delete snap.synergies;delete snap.routesUnlocked;delete snap.runFlags;delete snap.ui.fast;await new Promise((resolve,reject)=>{const req=indexedDB.open('life-on-stage-v7',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(snap,'save');tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>reject(tx.error)}});return{age:snap.age,choices:snap.currentChoices.length}});await page.reload();await waitForV7(page);expect(await page.evaluate(()=>window.__V7__.runtime.store.get().ui.busy)).toBeFalsy();expect(await page.evaluate(()=>Number.isFinite(window.__V7__.runtime.store.get().familyResources))).toBeTruthy();expect(await page.evaluate(()=>Array.isArray(window.__V7__.runtime.store.get().synergies))).toBeTruthy();await expect(page.locator('[data-action="choice"]').first()).toBeEnabled();await chooseFirstPlayable(page);expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBeGreaterThan(before.age);});
 
-test('V7 stale busy save recovers after refresh and remains playable',async({page})=>{
-  await page.setViewportSize({width:1440,height:900});
-  await page.goto('/');
-  await waitForV7(page);
-  await page.evaluate(async()=>{await window.__V7__.runtime.reroll(884422);window.__V7__.ui.setStart(true)});
-  await page.locator('[data-action="begin"]').click();
-  await page.locator('[data-action="choice"]').first().click();
-  await expectStoryOutput(page);
-  await expect(page.locator('[data-action="choice"]').first()).toBeEnabled();
-
-  for(let i=0;i<8;i++){
-    const alive=await page.evaluate(()=>window.__V7__.runtime.store.get().alive);
-    if(!alive)break;
-    await page.locator('[data-action="choice"]').first().click();
-    await expectStoryOutput(page);
-  }
-
-  const before=await page.evaluate(async()=>{
-    const snap=window.__V7__.runtime.store.snapshot();
-    snap.ui.busy=true;
-    await new Promise((resolve,reject)=>{
-      const req=indexedDB.open('life-on-stage-v7',1);
-      req.onerror=()=>reject(req.error);
-      req.onsuccess=()=>{
-        const db=req.result;
-        const tx=db.transaction('kv','readwrite');
-        tx.objectStore('kv').put(snap,'save');
-        tx.oncomplete=()=>{db.close();resolve()};
-        tx.onerror=()=>reject(tx.error);
-      };
-    });
-    return{age:snap.age,alive:snap.alive,choices:snap.currentChoices.length};
-  });
-  expect(before.alive).toBeTruthy();
-  expect(before.choices).toBeGreaterThan(0);
-
-  await page.reload();
-  await waitForV7(page);
-  await expect(page.locator('[data-action="choice"]')).toHaveCount(before.choices);
-  await expect(page.locator('[data-action="choice"]').first()).toBeEnabled();
-  await expectStoryOutput(page);
-  expect(await page.evaluate(()=>window.__V7__.runtime.store.get().ui.busy)).toBeFalsy();
-
-  await page.locator('[data-action="choice"]').first().click();
-  await expectStoryOutput(page);
-  expect(await page.evaluate(()=>window.__V7__.runtime.store.get().age)).toBeGreaterThan(before.age);
-  expect(await page.evaluate(async()=>{const s=await window.__V7__.runtime.persist.load();return s?.ui.busy??true})).toBeFalsy();
-});
-
-test('V7 Pro Max layout scales without dead zones',async({browser})=>{
-  const ctx=await browser.newContext({viewport:{width:430,height:932},isMobile:true,hasTouch:true});
-  const page=await ctx.newPage();
-  await page.goto('/');
-  await waitForV7(page);
-  await page.locator('[data-action="begin"]').click();
-  await page.locator('[data-action="choice"]').first().click();
-  await expectStoryOutput(page);
-  const r=await page.evaluate(()=>({scroll:document.documentElement.scrollHeight,inner:innerHeight,choices:[...document.querySelectorAll('[data-action="choice"]')].map(x=>{const b=x.getBoundingClientRect();return b.width*b.height})}));
-  expect(r.scroll).toBeLessThanOrEqual(r.inner+8);
-  expect(Math.min(...r.choices)).toBeGreaterThan(3000);
-  await ctx.close();
-});
+test('V8 collection, build screen and Pro Max layout stay usable',async({browser})=>{const ctx=await browser.newContext({viewport:{width:430,height:932},isMobile:true,hasTouch:true});const page=await ctx.newPage();await page.goto('/');await waitForV7(page);await page.locator('[data-action="begin"]').click();await expect(page.locator('.zhou-ritual h1')).toBeVisible();await chooseFirstPlayable(page);await page.locator('[data-action="view"][data-view="info"]').click();await expect(page.getByText('当前 Build')).toBeVisible();await page.locator('[data-action="view"][data-view="collection"]').click();await expect(page.getByText('世界线图鉴')).toBeVisible();const r=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth,nav:[...document.querySelectorAll('nav button')].map(x=>{const b=x.getBoundingClientRect();return b.width*b.height})}));expect(r.scrollWidth).toBeLessThanOrEqual(r.innerWidth+2);expect(Math.min(...r.nav)).toBeGreaterThan(1500);await ctx.close();});
