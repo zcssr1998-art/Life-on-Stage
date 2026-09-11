@@ -1,30 +1,93 @@
-/* V5.7.1 — width-aware fallback for WKWebView/browser chrome that reports unstable CSS viewport height. */
+/* V5.7.2 — deterministic responsive tiers.
+   Loaded last. These selectors intentionally override legacy fixed !important sizes. */
 
-/* Width alone can promote readability on roomy phones. */
-@media (min-width:400px){
-  :root{
-    --v57-tiny:8px;--v57-small:9.5px;--v57-body:10.8px;--v57-label:10.3px;
-    --v57-card-title:12px;--v57-hero-title:17.5px;--v57-money:12px;
-    --v57-stat-row:30px;--v57-stats-block:162px;--v57-story-block:124px;
-    --v57-choice-title:12px;--v57-choice-body:8.8px;--v57-story-body:8.8px;--v57-gap:5px;
-  }
+html[data-ui-scale="compact"]{
+  --v57-tiny:6.4px;--v57-small:7.2px;--v57-body:8px;--v57-label:8px;
+  --v57-hero-title:13px;--v57-money:9px;--v57-stat-row:21px;--v57-stats-block:116px;
+  --v57-story-block:80px;--v57-choice-title:9px;--v57-choice-body:6.5px;--v57-story-body:6.3px;--v57-gap:3px;
+}
+html[data-ui-scale="normal"]{
+  --v57-tiny:7.3px;--v57-small:8.5px;--v57-body:9.6px;--v57-label:9.4px;
+  --v57-hero-title:15.5px;--v57-money:10.5px;--v57-stat-row:26px;--v57-stats-block:142px;
+  --v57-story-block:106px;--v57-choice-title:11px;--v57-choice-body:7.8px;--v57-story-body:7.8px;--v57-gap:4px;
+}
+html[data-ui-scale="large"]{
+  --v57-tiny:8.2px;--v57-small:9.7px;--v57-body:11px;--v57-label:10.7px;
+  --v57-hero-title:17.5px;--v57-money:12px;--v57-stat-row:30px;--v57-stats-block:162px;
+  --v57-story-block:124px;--v57-choice-title:12.5px;--v57-choice-body:8.9px;--v57-story-body:8.9px;--v57-gap:5px;
+}
+html[data-ui-scale="xl"]{
+  --v57-tiny:9px;--v57-small:10.7px;--v57-body:12.2px;--v57-label:11.8px;
+  --v57-hero-title:19px;--v57-money:13px;--v57-stat-row:32px;--v57-stats-block:172px;
+  --v57-story-block:136px;--v57-choice-title:14px;--v57-choice-body:10px;--v57-story-body:10px;--v57-gap:5px;
 }
 
-@media (min-width:428px){
-  :root{
-    --v57-tiny:8.8px;--v57-small:10.5px;--v57-body:12px;--v57-label:11.4px;
-    --v57-card-title:14px;--v57-hero-title:19px;--v57-money:13px;
-    --v57-stat-row:32px;--v57-stats-block:172px;--v57-story-block:134px;
-    --v57-choice-title:14px;--v57-choice-body:9.7px;--v57-story-body:9.7px;--v57-gap:5px;
-  }
+/* Explicit typography overrides — necessary because older V5 CSS used hard !important values. */
+html[data-ui-scale="compact"] .v55-actions .action-card strong{font-size:9px!important}
+html[data-ui-scale="normal"] .v55-actions .action-card strong{font-size:11px!important}
+html[data-ui-scale="large"] .v55-actions .action-card strong{font-size:12.5px!important}
+html[data-ui-scale="xl"] .v55-actions .action-card strong{font-size:14px!important}
+
+html[data-ui-scale="compact"] .v55-actions .action-card p{font-size:6.5px!important}
+html[data-ui-scale="normal"] .v55-actions .action-card p{font-size:7.8px!important}
+html[data-ui-scale="large"] .v55-actions .action-card p{font-size:8.9px!important}
+html[data-ui-scale="xl"] .v55-actions .action-card p{font-size:10px!important}
+
+html[data-ui-scale="compact"] .v55-stat-head span{font-size:6.4px!important}
+html[data-ui-scale="normal"] .v55-stat-head span{font-size:8.5px!important}
+html[data-ui-scale="large"] .v55-stat-head span{font-size:9.7px!important}
+html[data-ui-scale="xl"] .v55-stat-head span{font-size:10.7px!important}
+
+html[data-ui-scale="compact"] .v55-stat-head b{font-size:8px!important}
+html[data-ui-scale="normal"] .v55-stat-head b{font-size:9.4px!important}
+html[data-ui-scale="large"] .v55-stat-head b{font-size:10.7px!important}
+html[data-ui-scale="xl"] .v55-stat-head b{font-size:11.8px!important}
+
+html[data-ui-scale="compact"] .v55-latest-head strong{font-size:7.5px!important}
+html[data-ui-scale="normal"] .v55-latest-head strong{font-size:9.4px!important}
+html[data-ui-scale="large"] .v55-latest-head strong{font-size:10.7px!important}
+html[data-ui-scale="xl"] .v55-latest-head strong{font-size:12px!important}
+
+html[data-ui-scale="compact"] .v55-story p{font-size:6.3px!important}
+html[data-ui-scale="normal"] .v55-story p{font-size:7.8px!important}
+html[data-ui-scale="large"] .v55-story p{font-size:8.9px!important}
+html[data-ui-scale="xl"] .v55-story p{font-size:10px!important}
+
+html[data-ui-scale="compact"] .v55-top-trait{font-size:5.9px!important}
+html[data-ui-scale="normal"] .v55-top-trait{font-size:7.6px!important}
+html[data-ui-scale="large"] .v55-top-trait{font-size:8.6px!important}
+html[data-ui-scale="xl"] .v55-top-trait{font-size:9.5px!important}
+
+html[data-ui-scale="compact"] .v55-title strong{font-size:13px!important}
+html[data-ui-scale="normal"] .v55-title strong{font-size:15.5px!important}
+html[data-ui-scale="large"] .v55-title strong{font-size:17.5px!important}
+html[data-ui-scale="xl"] .v55-title strong{font-size:19px!important}
+
+/* The extra space also grows actual sections, not only glyphs. */
+html[data-ui-scale="compact"] .game-screen.v55-game:not(:has(.result-strip)){
+  grid-template-rows:auto 116px 80px 17px minmax(110px,1fr)!important;gap:3px!important;
+}
+html[data-ui-scale="normal"] .game-screen.v55-game:not(:has(.result-strip)){
+  grid-template-rows:auto 142px minmax(92px,106px) 20px minmax(128px,1fr)!important;gap:4px!important;
+}
+html[data-ui-scale="large"] .game-screen.v55-game:not(:has(.result-strip)){
+  grid-template-rows:auto 162px minmax(106px,124px) 22px minmax(140px,1fr)!important;gap:5px!important;
+}
+html[data-ui-scale="xl"] .game-screen.v55-game:not(:has(.result-strip)){
+  grid-template-rows:auto 172px minmax(116px,136px) 24px minmax(150px,1fr)!important;gap:5px!important;
 }
 
-/* Short height always wins, so landscape / SE-like screens never overflow just because they are wide. */
-@media (max-height:719px){
-  :root{
-    --v57-tiny:6.4px;--v57-small:7.2px;--v57-body:8px;--v57-label:8px;
-    --v57-card-title:9px;--v57-hero-title:13px;--v57-money:9px;
-    --v57-stat-row:21px;--v57-stats-block:116px;--v57-story-block:80px;
-    --v57-choice-title:9px;--v57-choice-body:6.5px;--v57-story-body:6.3px;--v57-gap:3px;
-  }
-}
+html[data-ui-scale="large"] .v55-actions .action-card,
+html[data-ui-scale="xl"] .v55-actions .action-card{padding:8px 9px!important}
+html[data-ui-scale="large"] .v55-stat,
+html[data-ui-scale="xl"] .v55-stat{padding:4px 6px!important}
+html[data-ui-scale="xl"] .v55-story{padding:5px 6px!important}
+
+/* Information / ledger views may scroll, so readability wins there. */
+html[data-ui-scale="large"] .info-screen p,
+html[data-ui-scale="large"] .v56-ledger-list p{font-size:9.5px!important}
+html[data-ui-scale="xl"] .info-screen p,
+html[data-ui-scale="xl"] .v56-ledger-list p{font-size:10.5px!important}
+
+/* Never let the playable screen itself become scroll-driven. */
+.game-screen.v55-game{overflow:hidden!important}
