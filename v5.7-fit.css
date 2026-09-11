@@ -1,0 +1,30 @@
+/* V5.7.1 — width-aware fallback for WKWebView/browser chrome that reports unstable CSS viewport height. */
+
+/* Width alone can promote readability on roomy phones. */
+@media (min-width:400px){
+  :root{
+    --v57-tiny:8px;--v57-small:9.5px;--v57-body:10.8px;--v57-label:10.3px;
+    --v57-card-title:12px;--v57-hero-title:17.5px;--v57-money:12px;
+    --v57-stat-row:30px;--v57-stats-block:162px;--v57-story-block:124px;
+    --v57-choice-title:12px;--v57-choice-body:8.8px;--v57-story-body:8.8px;--v57-gap:5px;
+  }
+}
+
+@media (min-width:428px){
+  :root{
+    --v57-tiny:8.8px;--v57-small:10.5px;--v57-body:12px;--v57-label:11.4px;
+    --v57-card-title:14px;--v57-hero-title:19px;--v57-money:13px;
+    --v57-stat-row:32px;--v57-stats-block:172px;--v57-story-block:134px;
+    --v57-choice-title:14px;--v57-choice-body:9.7px;--v57-story-body:9.7px;--v57-gap:5px;
+  }
+}
+
+/* Short height always wins, so landscape / SE-like screens never overflow just because they are wide. */
+@media (max-height:719px){
+  :root{
+    --v57-tiny:6.4px;--v57-small:7.2px;--v57-body:8px;--v57-label:8px;
+    --v57-card-title:9px;--v57-hero-title:13px;--v57-money:9px;
+    --v57-stat-row:21px;--v57-stats-block:116px;--v57-story-block:80px;
+    --v57-choice-title:9px;--v57-choice-body:6.5px;--v57-story-body:6.3px;--v57-gap:3px;
+  }
+}
