@@ -1,0 +1,157 @@
+/* V5.7 — viewport-adaptive typography and density
+   Goal: use the space a device actually has instead of freezing every phone at the smallest readable UI. */
+
+:root{
+  --v57-tiny:7px;
+  --v57-small:8px;
+  --v57-body:9px;
+  --v57-label:9px;
+  --v57-card-title:10px;
+  --v57-hero-title:15px;
+  --v57-money:10px;
+  --v57-stat-row:24px;
+  --v57-stats-block:132px;
+  --v57-story-block:102px;
+  --v57-choice-title:10px;
+  --v57-choice-body:7.2px;
+  --v57-story-body:7px;
+  --v57-gap:4px;
+}
+
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* Compact phones: protect the one-screen flow first. */
+@media (max-height:719px){
+  :root{
+    --v57-tiny:6.4px;--v57-small:7.2px;--v57-body:8px;--v57-label:8px;
+    --v57-card-title:9px;--v57-hero-title:13px;--v57-money:9px;
+    --v57-stat-row:21px;--v57-stats-block:116px;--v57-story-block:80px;
+    --v57-choice-title:9px;--v57-choice-body:6.5px;--v57-story-body:6.3px;--v57-gap:3px;
+  }
+}
+
+/* Normal modern phones. */
+@media (min-height:780px){
+  :root{
+    --v57-tiny:7.5px;--v57-small:8.8px;--v57-body:10px;--v57-label:9.7px;
+    --v57-card-title:11px;--v57-hero-title:16px;--v57-money:11px;
+    --v57-stat-row:27px;--v57-stats-block:147px;--v57-story-block:112px;
+    --v57-choice-title:11px;--v57-choice-body:8px;--v57-story-body:8px;--v57-gap:4px;
+  }
+}
+
+/* Tall / large phones: actually spend the extra pixels on readability. */
+@media (min-width:390px) and (min-height:860px){
+  :root{
+    --v57-tiny:8px;--v57-small:9.5px;--v57-body:10.8px;--v57-label:10.3px;
+    --v57-card-title:12px;--v57-hero-title:17.5px;--v57-money:12px;
+    --v57-stat-row:30px;--v57-stats-block:162px;--v57-story-block:124px;
+    --v57-choice-title:12px;--v57-choice-body:8.8px;--v57-story-body:8.8px;--v57-gap:5px;
+  }
+}
+
+/* Pro Max / very tall Android phones. */
+@media (min-width:420px) and (min-height:920px){
+  :root{
+    --v57-tiny:8.6px;--v57-small:10.2px;--v57-body:11.6px;--v57-label:11px;
+    --v57-card-title:13px;--v57-hero-title:19px;--v57-money:13px;
+    --v57-stat-row:32px;--v57-stats-block:172px;--v57-story-block:134px;
+    --v57-choice-title:13px;--v57-choice-body:9.5px;--v57-story-body:9.5px;--v57-gap:5px;
+  }
+}
+
+/* Tablets / desktop: no reason to keep phone-sized typography. */
+@media (min-width:700px){
+  :root{
+    --v57-tiny:10px;--v57-small:11px;--v57-body:12px;--v57-label:12px;
+    --v57-card-title:14px;--v57-hero-title:22px;--v57-money:14px;
+    --v57-stat-row:34px;--v57-stats-block:182px;--v57-story-block:146px;
+    --v57-choice-title:14px;--v57-choice-body:10.5px;--v57-story-body:10.5px;--v57-gap:6px;
+  }
+}
+
+/* Main game layout now allocates more vertical room when the device has it. */
+.game-screen.v55-game:not(:has(.result-strip)){
+  grid-template-rows:auto var(--v57-stats-block) minmax(76px,var(--v57-story-block)) 22px minmax(120px,1fr)!important;
+  gap:var(--v57-gap)!important;
+}
+
+/* Hero / current person */
+.v55-self{padding:clamp(5px,1.3vw,9px)!important;gap:clamp(5px,1.2vw,9px)!important}
+.v55-title strong{font-size:var(--v57-hero-title)!important}
+.v55-title span,.v55-money span{font-size:var(--v57-small)!important}
+.v55-money b{font-size:var(--v57-money)!important}
+.v55-money i{font-size:var(--v57-tiny)!important}
+.v55-top5{grid-auto-rows:minmax(14px,auto)!important;gap:3px!important}
+.v55-top-trait{font-size:var(--v57-small)!important;padding:2px 4px!important;line-height:1.08!important}
+.v55-top-trait em{font-size:var(--v57-tiny)!important}
+
+/* Dynamic spouse slot */
+.v55-spouse{height:auto!important;min-height:38px!important;padding:4px 7px!important}
+.v55-spouse small,.v55-spouse span,.v55-spouse>em{font-size:var(--v57-tiny)!important}
+.v55-spouse strong{font-size:var(--v57-label)!important}
+
+/* Attribute bars */
+.v55-stats{grid-template-rows:repeat(5,var(--v57-stat-row))!important;gap:clamp(3px,.7vh,5px)!important}
+.v55-stat{padding:3px 5px!important;grid-template-rows:minmax(12px,1fr) 6px!important;gap:2px!important}
+.v55-stat-head span{font-size:var(--v57-small)!important}
+.v55-stat-head b{font-size:var(--v57-label)!important}
+.v55-stat-head em{font-size:var(--v57-tiny)!important}
+.v55-bar{height:6px!important}
+
+/* Latest 1–3 life events */
+.v55-latest{padding:5px 6px!important}
+.v55-latest-head{height:auto!important;min-height:15px!important}
+.v55-latest-head strong{font-size:var(--v57-label)!important}
+.v55-latest-head span{font-size:var(--v57-tiny)!important}
+.v55-latest.empty>p{font-size:var(--v57-small)!important}
+.v55-story-list{height:calc(100% - 17px)!important;gap:4px!important}
+.v55-story{padding:4px 5px!important;grid-template-rows:auto minmax(0,1fr) auto!important}
+.v55-story>div>b{width:13px!important;height:13px!important;font-size:var(--v57-tiny)!important}
+.v55-story>div>strong{font-size:var(--v57-label)!important}
+.v55-story>div>i{font-size:var(--v57-tiny)!important}
+.v55-story p{font-size:var(--v57-story-body)!important;line-height:1.38!important;-webkit-line-clamp:4!important}
+.v55-story small{font-size:var(--v57-tiny)!important}
+
+/* Choice header and 4 annual cards */
+.choice-head strong{font-size:var(--v57-body)!important}
+.choice-head span{font-size:var(--v57-small)!important}
+.v55-actions{gap:var(--v57-gap)!important}
+.v55-actions .action-card{padding:clamp(6px,1.4vw,10px)!important}
+.v55-actions .action-card strong{font-size:var(--v57-choice-title)!important;line-height:1.25!important}
+.v55-actions .action-card p{font-size:var(--v57-choice-body)!important;line-height:1.38!important;-webkit-line-clamp:3!important}
+.v55-actions .action-top{font-size:var(--v57-small)!important}
+
+/* Wealth strip: keep it readable instead of turning it into microprint. */
+.v56-finance-strip{height:auto!important;min-height:22px!important;padding:3px 6px!important;gap:6px!important}
+.v56-finance-strip>b{font-size:var(--v57-small)!important}
+.v56-finance-strip>span i{font-size:var(--v57-tiny)!important}
+.v56-finance-strip>u{font-size:var(--v57-tiny)!important}
+
+/* Bottom navigation / micro header */
+.bottom-nav .nav-btn{font-size:clamp(12px,3.4vw,18px)!important}
+.microbar,.microbar button,.seed{font-size:var(--v57-small)!important}
+
+/* Info page gets the same readability treatment, but may scroll normally. */
+.info-screen .section-line strong,.info-screen .info-block strong{font-size:var(--v57-body)}
+.info-screen .section-line span,.info-screen p,.info-screen small,.v56-ledger-list p{font-size:var(--v57-small)!important;line-height:1.45}
+.v56-ledger-list b,.v56-ledger-list strong{font-size:var(--v57-label)!important}
+.v56-ledger-list span{font-size:var(--v57-tiny)!important}
+
+/* Ending page: larger screens should feel like a result screen, not a spreadsheet. */
+.v55-end-hero h1{font-size:clamp(20px,5vw,30px)!important}
+.v55-end-hero p{font-size:var(--v57-body)!important}
+.v55-end-metrics span{font-size:var(--v57-small)!important}.v55-end-metrics strong{font-size:clamp(12px,3.2vw,18px)!important}
+.v55-verdict>p,.v55-highlights article p{font-size:var(--v57-body)!important;line-height:1.65!important}
+.v55-highlights article b{font-size:var(--v57-label)!important}.v55-highlights article small{font-size:var(--v57-small)!important}
+
+/* Extra-short landscape / embedded browsers: compress only when height actually demands it. */
+@media (max-height:620px){
+  .game-screen.v55-game:not(:has(.result-strip)){
+    grid-template-rows:auto 104px 68px 17px minmax(104px,1fr)!important;
+  }
+  .v55-spouse{display:none!important}
+  .v55-story p{-webkit-line-clamp:2!important}
+  .v55-actions .action-card p{-webkit-line-clamp:2!important}
+  .v56-finance-strip>span i:nth-child(n+3){display:none}
+}
