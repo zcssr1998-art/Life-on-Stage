@@ -1,23 +1,23 @@
-/* V6.1 — fix six-row V6 game layout, black-box attributes, Lachesis singularity */
+/* V6.1 — compact one-screen layout, black-box attributes, Lachesis singularity */
 
-/* V6 adds an extra world strip, so the old five-row grid creates a giant implicit row.
-   Keep all six real sections explicit. */
-.game-screen.v55-game:not(:has(.result-strip)){
-  display:grid!important;
-  grid-template-rows:auto var(--v57-stats-block,132px) auto minmax(64px,var(--v57-story-block,102px)) 22px minmax(132px,1fr)!important;
-  align-content:stretch!important;
+/* V6 inserted a sixth section into a V5 layout that was designed for five grid rows.
+   Use a vertical flex shell instead of continuing to fight implicit CSS-grid rows. */
+.game-screen.v55-game{
+  display:flex!important;
+  flex-direction:column!important;
   align-items:stretch!important;
+  justify-content:flex-start!important;
   gap:var(--v57-gap,4px)!important;
   overflow:hidden!important;
 }
-.game-screen.v55-game>.v56-hudpack,.game-screen.v55-game>.v55-stats,.game-screen.v55-game>.v6-world,
-.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{min-height:0!important;margin:0!important;align-self:stretch!important}
-/* Several older V5 rules give these blocks an intrinsic content height. In a fixed grid row WebKit then leaves the unused track as a visible blank band. */
-.game-screen.v55-game>.v55-stats,.game-screen.v55-game>.v55-latest,.game-screen.v55-game>.choice-head,.game-screen.v55-game>.v55-actions{height:100%!important;max-height:none!important}
-.v6-world{min-height:42px!important;max-height:66px!important;padding:5px 8px!important}
+.game-screen.v55-game>.v56-hudpack{flex:0 0 auto!important;min-height:0!important;margin:0!important}
+.game-screen.v55-game>.v55-stats{flex:0 0 var(--v57-stats-block,132px)!important;height:var(--v57-stats-block,132px)!important;min-height:0!important;max-height:none!important;margin:0!important}
+.game-screen.v55-game>.v6-world{flex:0 0 auto!important;min-height:42px!important;max-height:66px!important;margin:0!important;padding:5px 8px!important}
+.game-screen.v55-game>.v55-latest{flex:0 0 var(--v57-story-block,102px)!important;height:var(--v57-story-block,102px)!important;min-height:0!important;max-height:none!important;margin:0!important}
+.game-screen.v55-game>.choice-head{flex:0 0 22px!important;height:22px!important;min-height:22px!important;max-height:22px!important;margin:0!important}
+.game-screen.v55-game>.v55-actions{flex:1 1 0!important;height:auto!important;min-height:120px!important;max-height:none!important;margin:0!important;align-content:stretch!important}
 .v6-world-head{margin-bottom:2px!important}.v6-world p{margin-bottom:3px!important}
-.v55-latest.empty{min-height:58px!important}.v55-latest.empty>p{align-self:center!important;margin:0!important}
-.v55-actions{min-height:132px!important;align-content:stretch!important}
+.v55-latest.empty>p{align-self:center!important;margin:0!important}
 
 /* Exact attribute points are gone from the player-facing UI. */
 .v61-fog-stat{grid-template-rows:minmax(13px,1fr) 7px!important}
@@ -45,25 +45,25 @@
 .v61-end-singularity{position:relative;margin:12px 0;border:1px solid #72528b;border-radius:15px;padding:13px 14px 14px;background:radial-gradient(circle at 92% 5%,rgba(221,173,255,.13),transparent 34%),linear-gradient(145deg,#171426,#0c131e);overflow:hidden}
 .v61-singularity-symbol{position:absolute;right:12px;top:-8px;font-size:64px;color:rgba(221,180,255,.08);line-height:1}.v61-end-singularity h2{position:relative;margin:9px 0 6px;font-size:16px;color:#eee4ff}.v61-end-singularity p{position:relative;margin:0 0 10px;font-size:11px;line-height:1.65;color:#bcc7d8}.v61-end-singularity p b{color:#e8c8ff}.v61-end-singularity button{position:relative;width:100%;border:1px solid #8965a7;border-radius:10px;padding:10px;background:linear-gradient(90deg,#35204e,#202a48);color:#f3e8ff;font-weight:850;font-size:12px}.v61-end-singularity small{position:relative;display:block;margin-top:6px;color:#837b94;font-size:9px}
 
-/* Tablet/desktop: make content denser, not emptier. */
+/* Tablet / desktop uses the extra room for readability, never for blank bands. */
 @media(min-width:700px){
-  .game-screen.v55-game:not(:has(.result-strip)){
-    grid-template-rows:auto var(--v57-stats-block,182px) auto minmax(92px,var(--v57-story-block,146px)) 28px minmax(190px,1fr)!important;
-  }
-  .v6-world{max-height:74px!important}.v55-actions{min-height:190px!important}
+  .game-screen.v55-game>.v55-stats{flex-basis:var(--v57-stats-block,182px)!important;height:var(--v57-stats-block,182px)!important}
+  .game-screen.v55-game>.v6-world{max-height:74px!important}
+  .game-screen.v55-game>.v55-latest{flex-basis:var(--v57-story-block,146px)!important;height:var(--v57-story-block,146px)!important}
+  .game-screen.v55-game>.choice-head{flex-basis:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important}
+  .game-screen.v55-game>.v55-actions{min-height:160px!important}
   .v61-fog-stat .v55-stat-head b{font-size:12px!important}.v61-end-singularity h2{font-size:20px}.v61-end-singularity p{font-size:13px}.v61-end-singularity button{font-size:14px}
 }
 
 /* Short embedded iOS browsers: preserve one-screen play. */
 @media(max-height:719px){
-  .game-screen.v55-game:not(:has(.result-strip)){
-    grid-template-rows:auto 108px 39px 62px 18px minmax(108px,1fr)!important;
-    gap:3px!important;
-  }
-  .game-screen.v55-game>.v55-stats{height:108px!important;overflow:hidden!important}
-  .v6-world{height:39px!important;min-height:39px!important;padding:3px 6px!important}.v6-world p{display:none!important}.v6-world-head{margin:0!important}.v6-world-pills{margin-top:2px}.v6-world-pills i:nth-child(n+5){display:none!important}
-  .v55-latest{height:62px!important;min-height:62px!important;padding:3px 5px!important}.v55-story p{-webkit-line-clamp:2!important}
-  .choice-head{height:18px!important;min-height:18px!important}.v55-actions{min-height:108px!important}
+  .game-screen.v55-game{gap:3px!important}
+  .game-screen.v55-game>.v55-stats{flex-basis:108px!important;height:108px!important;overflow:hidden!important}
+  .game-screen.v55-game>.v6-world{flex-basis:39px!important;height:39px!important;min-height:39px!important;max-height:39px!important;padding:3px 6px!important}
+  .v6-world p{display:none!important}.v6-world-head{margin:0!important}.v6-world-pills{margin-top:2px}.v6-world-pills i:nth-child(n+5){display:none!important}
+  .game-screen.v55-game>.v55-latest{flex-basis:62px!important;height:62px!important;min-height:62px!important;padding:3px 5px!important}.v55-story p{-webkit-line-clamp:2!important}
+  .game-screen.v55-game>.choice-head{flex-basis:18px!important;height:18px!important;min-height:18px!important;max-height:18px!important}
+  .game-screen.v55-game>.v55-actions{min-height:108px!important}
 }
 
 @media(max-width:390px){
