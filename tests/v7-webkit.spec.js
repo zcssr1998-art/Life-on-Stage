@@ -1,8 +1,13 @@
 import {test,expect} from '@playwright/test';
 
+const waitForV7=async page=>{
+  await page.waitForFunction(()=>!!window.__V7__?.runtime&&!!window.__V7__?.ui);
+};
+
 test('V7 mobile long-session, money audit and fate rewind',async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/');
+  await waitForV7(page);
   await expect(page.getByText('V7 · Engine Rewrite')).toBeVisible();
   await page.evaluate(async()=>{await window.__V7__.runtime.reroll(763211);window.__V7__.ui.setStart(true)});
   await page.locator('[data-action="begin"]').click();
@@ -34,6 +39,7 @@ test('V7 mobile long-session, money audit and fate rewind',async({page})=>{
 test('V7 stale busy save recovers after refresh and remains playable',async({page})=>{
   await page.setViewportSize({width:1440,height:900});
   await page.goto('/');
+  await waitForV7(page);
   await page.evaluate(async()=>{await window.__V7__.runtime.reroll(884422);window.__V7__.ui.setStart(true)});
   await page.locator('[data-action="begin"]').click();
   await page.locator('[data-action="choice"]').first().click();
@@ -65,6 +71,7 @@ test('V7 stale busy save recovers after refresh and remains playable',async({pag
   expect(before.choices).toBeGreaterThan(0);
 
   await page.reload();
+  await waitForV7(page);
   await expect(page.locator('[data-action="choice"]')).toHaveCount(before.choices);
   await expect(page.locator('[data-action="choice"]').first()).toBeEnabled();
   expect(await page.evaluate(()=>window.__V7__.runtime.store.get().ui.busy)).toBeFalsy();
@@ -78,6 +85,7 @@ test('V7 Pro Max layout scales without dead zones',async({browser})=>{
   const ctx=await browser.newContext({viewport:{width:430,height:932},isMobile:true,hasTouch:true});
   const page=await ctx.newPage();
   await page.goto('/');
+  await waitForV7(page);
   await page.locator('[data-action="begin"]').click();
   await page.locator('[data-action="choice"]').first().click();
   const r=await page.evaluate(()=>({scroll:document.documentElement.scrollHeight,inner:innerHeight,choices:[...document.querySelectorAll('[data-action="choice"]')].map(x=>{const b=x.getBoundingClientRect();return b.width*b.height})}));
